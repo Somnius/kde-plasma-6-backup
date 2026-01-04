@@ -13,6 +13,13 @@
 
 set -euo pipefail
 
+# Debug function for verbose output
+debug() {
+    if [[ "$VERBOSE" == true ]]; then
+        echo -e "${BLUE}[DEBUG]${NC} $*" >&2
+    fi
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -177,6 +184,7 @@ VALIDATE_ONLY=false
 SKIP_DISPLAY_CONFIG=false
 INTERACTIVE=false
 SELECTIVE_RESTORE=false
+VERBOSE=false
 
 # Parse arguments
 BACKUP_DIR=""
@@ -208,6 +216,10 @@ while [[ $# -gt 0 ]]; do
             SELECTIVE_RESTORE=true
             shift
             ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 BACKUP_DIR [OPTIONS]"
             echo ""
@@ -218,6 +230,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --interactive, -i       Interactive TUI to selectively choose what to restore"
             echo "  --dry-run               Show what would be restored (no changes)"
             echo "  --validate-only         Validate backup integrity and compatibility"
+            echo "  -v, --verbose           Enable verbose/debug output"
             echo "  -h, --help              Show this help message"
             exit 0
             ;;
@@ -1219,11 +1232,15 @@ else
     restore_config "mimeapps.list" "Default applications for file types"
 
     # Restore user-installed resources
+    debug "Checking SKIP_USER_RESOURCES: $SKIP_USER_RESOURCES"
     if [[ "$SKIP_USER_RESOURCES" == false ]]; then
+        debug "Entering user resources restore section"
         echo ""
         echo -e "${BLUE}--- Restoring user-installed themes, icons, and resources ---${NC}"
         
+        debug "Checking RE_DOWNLOAD: $RE_DOWNLOAD"
         if [[ "$RE_DOWNLOAD" == true ]]; then
+            debug "Entering RE_DOWNLOAD mode"
             echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
             
             # Detect package manager
@@ -1275,8 +1292,10 @@ else
             else
                 echo -e "${BLUE}  Use your distribution's package manager${NC}"
             fi
+            debug "Exiting RE_DOWNLOAD mode"
             
         else
+            debug "Entering direct file restore mode (RE_DOWNLOAD=false)"
             # Restore files directly
             if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/plasma/desktoptheme" \
@@ -1325,13 +1344,22 @@ else
                             "${HOME}/.local/share/knewstuff3" \
                             "KNewStuff download registries"
             fi
+            debug "Completed direct file restore"
         fi
+        debug "Exiting user resources restore section"
+    else
+        debug "Skipping user resources (SKIP_USER_RESOURCES=true)"
     fi
+    debug "Exiting non-interactive restore block"
 fi
+
+debug "Reached common completion section"
 
 
 # Common completion message for both modes
+debug "Checking DRY_RUN: $DRY_RUN"
 if [[ "$DRY_RUN" == false ]]; then
+    debug "Entering common completion section (non-dry-run)"
     echo ""
     echo -e "${GREEN}=== Restore completed! ===${NC}"
     
@@ -1474,9 +1502,12 @@ if [[ "$DRY_RUN" == false ]]; then
     echo -e "${YELLOW}Note: Panel transparency settings are in plasma-org.kde.plasma.desktop-appletsrc${NC}"
     
     # Offer to restart Plasma
+    debug "Prompting for Plasma shell restart"
     read -p "Restart Plasma shell now? (y/n): " -n 1 -r
     echo
+    debug "User response to restart prompt: $REPLY"
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        debug "User chose to restart plasmashell"
         echo -e "${BLUE}Restarting Plasma shell...${NC}"
         killall plasmashell 2>/dev/null || true
         sleep 2
