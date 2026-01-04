@@ -900,7 +900,17 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
         if [[ "$DRY_RUN" == true ]]; then
             echo -e "${BLUE}[DRY RUN] Would reconfigure KWin to apply window decorations${NC}"
         else
-            reconfigure_kwin
+            if command -v qdbus >/dev/null 2>&1; then
+                echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+                qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
+                    echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+                }
+            elif command -v qdbus-qt6 >/dev/null 2>&1; then
+                echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+                qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
+                    echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+                }
+            fi
         fi
     fi
     
@@ -1357,7 +1367,17 @@ if [[ "$DRY_RUN" == false ]]; then
     
     # Reconfigure KWin if window manager settings were restored
     if [[ "$INTERACTIVE" == false ]] || [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
-        reconfigure_kwin
+        if command -v qdbus >/dev/null 2>&1; then
+            echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+            qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
+                echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+            }
+        elif command -v qdbus-qt6 >/dev/null 2>&1; then
+            echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+            qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
+                echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+            }
+        fi
     fi
     
     echo ""
