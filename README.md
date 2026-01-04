@@ -2,6 +2,17 @@
 
 Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, configurations, and user preferences.
 
+![Version](https://img.shields.io/badge/version-1.2--beta-orange)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Shell](https://img.shields.io/badge/shell-Bash-green)
+![Markdown](https://img.shields.io/badge/markdown-README-blue)
+
+**Top Languages:**
+![Bash](https://img.shields.io/badge/Bash-100%25-89e051?logo=gnu-bash&logoColor=white)
+![Shell Script](https://img.shields.io/badge/Shell%20Script-100%25-89e051?logo=gnu-bash&logoColor=white)
+
+**Status:** 🧪 **Beta Testing** - Currently being tested on latest PikaOS 4 (codename "nest") on desktop and virtual machines.
+
 **License:** [MIT](LICENSE)
 
 ---
