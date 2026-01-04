@@ -315,6 +315,9 @@ if [[ -d "${HOME}/.config/autostart" ]]; then
     backup_item "${HOME}/.config/autostart" "${BACKUP_DIR}/config/autostart" "Autostart applications"
 fi
 
+# Default applications (mimeapps.list)
+backup_config "mimeapps.list" "Default applications for file types"
+
 echo ""
 echo -e "${BLUE}--- Backing up user-installed themes, icons, and resources ---${NC}"
 
@@ -495,6 +498,7 @@ echo -e "${BLUE}--- Creating categories metadata ---${NC}"
     echo "# Applications"
     echo "applications|config/kde.org|KDE application settings (Discover, Dolphin, Kate, etc.)"
     echo "applications|config/autostart|Autostart applications"
+    echo "applications|config/mimeapps.list|Default applications for file types"
     echo ""
     echo "# System Services"
     echo "services|config/kded6rc|KDE daemon configuration (Plasma 6)"

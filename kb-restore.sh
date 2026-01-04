@@ -408,6 +408,113 @@ fi
 declare -A CATEGORY_FILES
 declare -A SELECTED_CATEGORIES
 
+# Function to check if an application exists (including Flatpak)
+check_app_exists() {
+    local app_name="$1"
+    local desktop_file="$2"
+    
+    # Check if it's a Flatpak app
+    if [[ "$desktop_file" == *"flatpak"* ]] || [[ "$app_name" == *"flatpak"* ]]; then
+        # Extract Flatpak app ID from desktop file if possible
+        if [[ -f "$desktop_file" ]]; then
+            local flatpak_id=$(grep -E "^X-Flatpak-RenamedFrom=" "$desktop_file" 2>/dev/null | cut -d'=' -f2 | head -1)
+            if [[ -n "$flatpak_id" ]]; then
+                flatpak list --app --columns=application 2>/dev/null | grep -q "^${flatpak_id}$" && return 0
+            fi
+        fi
+        # Try to find by name in Flatpak
+        flatpak list --app --columns=application 2>/dev/null | grep -qi "${app_name}" && return 0
+    fi
+    
+    # Check if desktop file exists in system
+    if [[ -f "$desktop_file" ]]; then
+        local exec_line=$(grep "^Exec=" "$desktop_file" 2>/dev/null | head -1 | cut -d'=' -f2 | cut -d' ' -f1)
+        if [[ -n "$exec_line" ]]; then
+            command -v "$exec_line" >/dev/null 2>&1 && return 0
+        fi
+    fi
+    
+    # Check if command exists
+    command -v "$app_name" >/dev/null 2>&1 && return 0
+    
+    # Check desktop file database
+    if command -v gtk-launch >/dev/null 2>&1; then
+        local basename_app=$(basename "$desktop_file" .desktop 2>/dev/null)
+        gtk-launch "$basename_app" --version >/dev/null 2>&1 && return 0
+    fi
+    
+    return 1
+}
+
+# Function to detect missing autostart applications
+detect_missing_autostart_apps() {
+    local autostart_dir="${BACKUP_DIR}/config/autostart"
+    local missing_apps=()
+    
+    if [[ ! -d "$autostart_dir" ]]; then
+        return 0
+    fi
+    
+    while IFS= read -r desktop_file; do
+        local app_name=$(basename "$desktop_file" .desktop)
+        local full_path="${HOME}/.config/autostart/$(basename "$desktop_file")"
+        
+        if ! check_app_exists "$app_name" "$desktop_file"; then
+            missing_apps+=("$app_name|$desktop_file")
+        fi
+    done < <(find "$autostart_dir" -name "*.desktop" 2>/dev/null)
+    
+    printf '%s\n' "${missing_apps[@]}"
+}
+
+# Function to detect missing default applications from mimeapps.list
+detect_missing_default_apps() {
+    local mimeapps_file="${BACKUP_DIR}/config/mimeapps.list"
+    declare -A seen_apps
+    local missing_apps=()
+    
+    if [[ ! -f "$mimeapps_file" ]]; then
+        return 0
+    fi
+    
+    # Extract application names from mimeapps.list
+    while IFS='=' read -r mime_type apps; do
+        # Skip comments and empty lines
+        [[ "$mime_type" =~ ^#.*$ ]] && continue
+        [[ -z "$mime_type" ]] && continue
+        
+        # Parse applications (format: app1.desktop;app2.desktop;)
+        IFS=';' read -ra app_array <<< "$apps"
+        for app_desktop in "${app_array[@]}"; do
+            app_desktop=$(echo "$app_desktop" | xargs) # trim whitespace
+            [[ -z "$app_desktop" ]] && continue
+            
+            local app_name=$(basename "$app_desktop" .desktop)
+            
+            # Skip if we've already checked this app
+            [[ -n "${seen_apps[$app_name]}" ]] && continue
+            seen_apps[$app_name]=1
+            
+            local desktop_file="/usr/share/applications/${app_desktop}"
+            local flatpak_desktop="${HOME}/.local/share/applications/${app_desktop}"
+            
+            # Check if app exists
+            local app_exists=false
+            if [[ -f "$desktop_file" ]] && check_app_exists "$app_name" "$desktop_file"; then
+                app_exists=true
+            elif [[ -f "$flatpak_desktop" ]] && check_app_exists "$app_name" "$flatpak_desktop"; then
+                app_exists=true
+            fi
+            
+            if [[ "$app_exists" == false ]]; then
+                missing_apps+=("$app_name|$app_desktop")
+            fi
+        done
+    done < "$mimeapps_file"
+    
+    printf '%s\n' "${missing_apps[@]}"
+}
+
 load_categories() {
     local categories_file="${BACKUP_DIR}/metadata/categories.txt"
     if [[ ! -f "$categories_file" ]]; then
@@ -500,6 +607,30 @@ show_interactive_menu() {
         echo -e "  ${GREEN}✓${NC} ${display_name} (${count} items)"
     done
     echo ""
+    
+    # Ask about restore options in interactive mode
+    echo ""
+    echo -e "${BLUE}=== Restore Options ===${NC}"
+    
+    # Ask about display config
+    if [[ -f "${BACKUP_DIR}/config/kwinoutputconfig.json" ]]; then
+        echo -e "${YELLOW}Display configuration found in backup${NC}"
+        read -p "Skip display configuration (safe for different hardware)? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            SKIP_DISPLAY_CONFIG=true
+        fi
+    fi
+    
+    # Ask about re-download themes
+    if [[ "$SKIP_USER_RESOURCES" == false ]] && [[ -n "${SELECTED_CATEGORIES[appearance]}" ]]; then
+        echo -e "${YELLOW}Appearance category selected${NC}"
+        read -p "Re-download themes/icons from repositories instead of restoring files? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            RE_DOWNLOAD=true
+        fi
+    fi
     
     read -p "Continue with restore? (y/n): " -n 1 -r
     echo
@@ -787,6 +918,9 @@ if [[ -d "${BACKUP_DIR}/config/autostart" ]]; then
     restore_item "${BACKUP_DIR}/config/autostart" "${HOME}/.config/autostart" "Autostart applications"
 fi
 
+# Restore default applications
+restore_config "mimeapps.list" "Default applications for file types"
+
 # Restore user-installed resources
 if [[ "$SKIP_USER_RESOURCES" == false ]]; then
     echo ""
@@ -917,6 +1051,124 @@ reconfigure_kwin() {
 if [[ "$DRY_RUN" == false ]]; then
     echo ""
     echo -e "${GREEN}=== Restore completed! ===${NC}"
+    
+    # Check for missing autostart applications
+    echo ""
+    echo -e "${BLUE}--- Checking for missing applications ---${NC}"
+    
+    local missing_autostart=$(detect_missing_autostart_apps)
+    if [[ -n "$missing_autostart" ]]; then
+        echo ""
+        echo -e "${YELLOW}Missing autostart applications detected:${NC}"
+        local autostart_count=0
+        declare -a autostart_apps
+        while IFS='|' read -r app_name desktop_file; do
+            echo -e "  ${YELLOW}•${NC} ${app_name}"
+            autostart_apps+=("$app_name|$desktop_file")
+            ((autostart_count++))
+        done <<< "$missing_autostart"
+        
+        if [[ "$DRY_RUN" == false ]]; then
+            echo ""
+            read -p "Would you like to install these missing autostart applications? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                for app_entry in "${autostart_apps[@]}"; do
+                    IFS='|' read -r app_name desktop_file <<< "$app_entry"
+                    echo -e "${BLUE}Attempting to install: ${app_name}${NC}"
+                    
+                    # Check if it's a Flatpak app
+                    if [[ "$desktop_file" == *"flatpak"* ]] || [[ "$app_name" == "yakuake" ]] || flatpak list --app 2>/dev/null | grep -qi "$app_name"; then
+                        if command -v flatpak >/dev/null 2>&1; then
+                            # Try to find Flatpak app ID
+                            local flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
+                            if [[ -n "$flatpak_id" ]]; then
+                                echo -e "${YELLOW}Installing Flatpak app: ${flatpak_id}${NC}"
+                                flatpak install -y "$flatpak_id" 2>/dev/null || {
+                                    echo -e "${YELLOW}Could not auto-install ${app_name}. Please install manually.${NC}"
+                                    echo -e "${YELLOW}  Try: flatpak search ${app_name}${NC}"
+                                }
+                            else
+                                echo -e "${YELLOW}Could not find Flatpak app for ${app_name}. Please install manually.${NC}"
+                                echo -e "${YELLOW}  Try: flatpak search ${app_name}${NC}"
+                            fi
+                        else
+                            echo -e "${YELLOW}Flatpak not available. Please install ${app_name} manually.${NC}"
+                        fi
+                    else
+                        # Try system package manager
+                        PKG_MGR=$(detect_package_manager)
+                        if [[ "$PKG_MGR" != "unknown" ]]; then
+                            INSTALL_CMD=$(get_install_command "$PKG_MGR")
+                            echo -e "${YELLOW}Attempting to install via ${PKG_MGR}: ${app_name}${NC}"
+                            # Note: Package name might differ, user may need to install manually
+                            echo -e "${YELLOW}  Please install ${app_name} manually using your package manager${NC}"
+                            echo -e "${YELLOW}  Example: ${INSTALL_CMD} ${app_name}${NC}"
+                        else
+                            echo -e "${YELLOW}Please install ${app_name} manually${NC}"
+                        fi
+                    fi
+                done
+            fi
+        fi
+    fi
+    
+    # Check for missing default applications
+    local missing_defaults=$(detect_missing_default_apps)
+    if [[ -n "$missing_defaults" ]]; then
+        echo ""
+        echo -e "${YELLOW}Missing default applications detected:${NC}"
+        local defaults_count=0
+        declare -a default_apps
+        while IFS='|' read -r app_name app_desktop; do
+            echo -e "  ${YELLOW}•${NC} ${app_name}"
+            default_apps+=("$app_name|$app_desktop")
+            ((defaults_count++))
+        done <<< "$missing_defaults"
+        
+        if [[ "$DRY_RUN" == false ]]; then
+            echo ""
+            read -p "Would you like to install these missing default applications? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                for app_entry in "${default_apps[@]}"; do
+                    IFS='|' read -r app_name app_desktop <<< "$app_entry"
+                    echo -e "${BLUE}Attempting to install: ${app_name}${NC}"
+                    
+                    # Check if it's a Flatpak app
+                    if [[ "$app_desktop" == *"flatpak"* ]] || flatpak list --app 2>/dev/null | grep -qi "$app_name"; then
+                        if command -v flatpak >/dev/null 2>&1; then
+                            local flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
+                            if [[ -n "$flatpak_id" ]]; then
+                                echo -e "${YELLOW}Installing Flatpak app: ${flatpak_id}${NC}"
+                                flatpak install -y "$flatpak_id" 2>/dev/null || {
+                                    echo -e "${YELLOW}Could not auto-install ${app_name}. Please install manually.${NC}"
+                                }
+                            else
+                                echo -e "${YELLOW}Could not find Flatpak app for ${app_name}. Please install manually.${NC}"
+                            fi
+                        else
+                            echo -e "${YELLOW}Flatpak not available. Please install ${app_name} manually.${NC}"
+                        fi
+                    else
+                        # Try system package manager
+                        PKG_MGR=$(detect_package_manager)
+                        if [[ "$PKG_MGR" != "unknown" ]]; then
+                            INSTALL_CMD=$(get_install_command "$PKG_MGR")
+                            echo -e "${YELLOW}Please install ${app_name} manually using your package manager${NC}"
+                            echo -e "${YELLOW}  Example: ${INSTALL_CMD} ${app_name}${NC}"
+                        else
+                            echo -e "${YELLOW}Please install ${app_name} manually${NC}"
+                        fi
+                    fi
+                done
+            fi
+        fi
+    fi
+    
+    if [[ -z "$missing_autostart" ]] && [[ -z "$missing_defaults" ]]; then
+        echo -e "${GREEN}✓ All applications are available${NC}"
+    fi
     
     # Reconfigure KWin if window manager settings were restored
     if [[ "$INTERACTIVE" == false ]] || [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
