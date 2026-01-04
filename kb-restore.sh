@@ -1224,58 +1224,58 @@ else
         echo -e "${BLUE}--- Restoring user-installed themes, icons, and resources ---${NC}"
         
         if [[ "$RE_DOWNLOAD" == true ]]; then
-        echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
-        
-        # Detect package manager
-        PKG_MGR=$(detect_package_manager)
-        PKG_MGR_NAME=$(get_package_manager_name "$PKG_MGR")
-        INSTALL_CMD=$(get_install_command "$PKG_MGR")
-        
-        if [[ "$PKG_MGR" == "unknown" ]]; then
-            echo -e "${RED}Error: Could not detect package manager${NC}"
-            echo -e "${YELLOW}Please install packages manually from the backup's kde-packages.txt${NC}"
-        else
-            echo -e "${BLUE}Detected package manager: ${PKG_MGR_NAME}${NC}"
-        fi
-        
-        # Install packages from package list if available
-        if [[ -f "${BACKUP_DIR}/metadata/kde-packages.txt" ]]; then
-            echo -e "${BLUE}Installing packages from backup list...${NC}"
-            if [[ "$DRY_RUN" == false ]]; then
-                PACKAGES=$(grep -v '^#' "${BACKUP_DIR}/metadata/kde-packages.txt" | grep -v '^$' | tr '\n' ' ')
-                if [[ -n "$PACKAGES" ]]; then
-                    echo -e "${YELLOW}Packages to install: ${PACKAGES}${NC}"
-                    echo -e "${YELLOW}Note: Package names may differ between distributions${NC}"
-                    echo -e "${YELLOW}Some packages may not be available or have different names${NC}"
-                    read -p "Install these packages? (y/n): " -n 1 -r
-                    echo
-                    if [[ $REPLY =~ ^[Yy]$ ]]; then
-                        if [[ "$PKG_MGR" != "unknown" ]]; then
-                            $INSTALL_CMD $PACKAGES || {
-                                echo -e "${YELLOW}Warning: Some packages could not be installed${NC}"
-                                echo -e "${YELLOW}This is normal if package names differ between distributions${NC}"
-                                echo -e "${YELLOW}You may need to install packages manually or use Discover${NC}"
-                            }
-                        else
-                            echo -e "${RED}Cannot install packages: unknown package manager${NC}"
+            echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
+            
+            # Detect package manager
+            PKG_MGR=$(detect_package_manager)
+            PKG_MGR_NAME=$(get_package_manager_name "$PKG_MGR")
+            INSTALL_CMD=$(get_install_command "$PKG_MGR")
+            
+            if [[ "$PKG_MGR" == "unknown" ]]; then
+                echo -e "${RED}Error: Could not detect package manager${NC}"
+                echo -e "${YELLOW}Please install packages manually from the backup's kde-packages.txt${NC}"
+            else
+                echo -e "${BLUE}Detected package manager: ${PKG_MGR_NAME}${NC}"
+            fi
+            
+            # Install packages from package list if available
+            if [[ -f "${BACKUP_DIR}/metadata/kde-packages.txt" ]]; then
+                echo -e "${BLUE}Installing packages from backup list...${NC}"
+                if [[ "$DRY_RUN" == false ]]; then
+                    PACKAGES=$(grep -v '^#' "${BACKUP_DIR}/metadata/kde-packages.txt" | grep -v '^$' | tr '\n' ' ')
+                    if [[ -n "$PACKAGES" ]]; then
+                        echo -e "${YELLOW}Packages to install: ${PACKAGES}${NC}"
+                        echo -e "${YELLOW}Note: Package names may differ between distributions${NC}"
+                        echo -e "${YELLOW}Some packages may not be available or have different names${NC}"
+                        read -p "Install these packages? (y/n): " -n 1 -r
+                        echo
+                        if [[ $REPLY =~ ^[Yy]$ ]]; then
+                            if [[ "$PKG_MGR" != "unknown" ]]; then
+                                $INSTALL_CMD $PACKAGES || {
+                                    echo -e "${YELLOW}Warning: Some packages could not be installed${NC}"
+                                    echo -e "${YELLOW}This is normal if package names differ between distributions${NC}"
+                                    echo -e "${YELLOW}You may need to install packages manually or use Discover${NC}"
+                                }
+                            else
+                                echo -e "${RED}Cannot install packages: unknown package manager${NC}"
+                            fi
                         fi
                     fi
+                else
+                    echo -e "${BLUE}[DRY RUN] Would install packages from kde-packages.txt using ${PKG_MGR_NAME}${NC}"
                 fi
             else
-                echo -e "${BLUE}[DRY RUN] Would install packages from kde-packages.txt using ${PKG_MGR_NAME}${NC}"
+                echo -e "${YELLOW}No package list found in backup${NC}"
             fi
-        else
-            echo -e "${YELLOW}No package list found in backup${NC}"
-        fi
-        
-        # Extract theme/icon names from config and try to install them
-        echo -e "${BLUE}Note: You may need to install themes/icons manually from Discover or:${NC}"
-        if [[ "$PKG_MGR" != "unknown" ]]; then
-            echo -e "${BLUE}  ${INSTALL_CMD} <package-name>${NC}"
-        else
-            echo -e "${BLUE}  Use your distribution's package manager${NC}"
-        fi
-        
+            
+            # Extract theme/icon names from config and try to install them
+            echo -e "${BLUE}Note: You may need to install themes/icons manually from Discover or:${NC}"
+            if [[ "$PKG_MGR" != "unknown" ]]; then
+                echo -e "${BLUE}  ${INSTALL_CMD} <package-name>${NC}"
+            else
+                echo -e "${BLUE}  Use your distribution's package manager${NC}"
+            fi
+            
         else
             # Restore files directly
             if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
@@ -1477,11 +1477,23 @@ if [[ "$DRY_RUN" == false ]]; then
     read -p "Restart Plasma shell now? (y/n): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${BLUE}Restarting Plasma shell...${NC}"
         killall plasmashell 2>/dev/null || true
+        sleep 2
+        # Try multiple methods to restart plasmashell
+        if command -v kstart >/dev/null 2>&1; then
+            kstart plasmashell 2>/dev/null || plasmashell >/dev/null 2>&1 &
+        elif command -v dbus-launch >/dev/null 2>&1; then
+            dbus-launch plasmashell >/dev/null 2>&1 &
+        else
+            plasmashell >/dev/null 2>&1 &
+        fi
         sleep 1
-        kstart plasmashell 2>/dev/null || {
-            echo -e "${YELLOW}Could not restart plasmashell automatically. Please log out and back in.${NC}"
-        }
+        if pgrep -x plasmashell >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ Plasma shell restarted successfully${NC}"
+        else
+            echo -e "${YELLOW}Warning: Plasma shell may not have restarted. Please log out and back in.${NC}"
+        fi
     fi
 else
     echo ""
