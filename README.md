@@ -4,6 +4,27 @@ Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, c
 
 **License:** [MIT](LICENSE)
 
+---
+
+## ⚠️ Important Limitations
+
+<div style="border: 2px solid #ff6b6b; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+
+**⚠️ Cross-Distribution Compatibility Warning**
+
+This project is **not recommended for cross-distribution use** (different base distributions). Some packages may not exist on other distributions (e.g., distribution-specific packages like `pika-kde-*` packages on PikaOS).
+
+**Recommended Usage:**
+- ✅ **Same distribution to same distribution** (e.g., CachyOS to CachyOS)
+- ✅ **Same base distribution** (e.g., Arch to Arch, Debian/Ubuntu-based to Debian/Ubuntu-based)
+- ❌ **Does NOT work on immutable distributions** (e.g., Fedora Silverblue, openSUSE MicroOS, NixOS) - **at all**
+
+While the scripts include cross-distribution package manager detection, package name differences and distribution-specific packages will cause issues. Use with caution when restoring on different distributions.
+
+</div>
+
+---
+
 ## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 **Always use the `kde-plasma-6` wrapper script for all operations:**
