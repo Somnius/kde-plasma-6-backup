@@ -50,8 +50,8 @@ The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are i
 
 ## Table of Contents
 
-- [Important Limitations](#-important-limitations)
-- [Important: Use the Wrapper Script](#-important-use-the-wrapper-script)
+- [Important Limitations](#important-limitations)
+- [Important: Use the Wrapper Script](#important-use-the-wrapper-script)
 - [Quick Start](#quick-start)
 - [Cross-Distribution Support](#cross-distribution-support)
 - [Safety and Precautions](#safety-and-precautions)
