@@ -996,11 +996,11 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
     echo ""
     echo -e "${BLUE}--- Checking for missing applications ---${NC}"
     
-    local missing_autostart=$(detect_missing_autostart_apps)
+    missing_autostart=$(detect_missing_autostart_apps)
     if [[ -n "$missing_autostart" ]]; then
         echo ""
         echo -e "${YELLOW}Missing autostart applications detected:${NC}"
-        local autostart_count=0
+        autostart_count=0
         declare -a autostart_apps
         while IFS='|' read -r app_name desktop_file; do
             echo -e "  ${YELLOW}•${NC} ${app_name}"
@@ -1023,7 +1023,7 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
                         if [[ "$desktop_file" == *"flatpak"* ]] || [[ "$app_name" == "yakuake" ]] || flatpak list --app 2>/dev/null | grep -qi "$app_name"; then
                             if command -v flatpak >/dev/null 2>&1; then
                                 # Try to find Flatpak app ID
-                                local flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
+                                flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
                                 if [[ -n "$flatpak_id" ]]; then
                                     echo -e "${YELLOW}Installing Flatpak app: ${flatpak_id}${NC}"
                                     flatpak install -y "$flatpak_id" 2>/dev/null || {
@@ -1387,11 +1387,11 @@ if [[ "$DRY_RUN" == false ]]; then
     fi
     
     # Check for missing default applications
-    local missing_defaults=$(detect_missing_default_apps)
+    missing_defaults=$(detect_missing_default_apps)
     if [[ -n "$missing_defaults" ]]; then
         echo ""
         echo -e "${YELLOW}Missing default applications detected:${NC}"
-        local defaults_count=0
+        defaults_count=0
         declare -a default_apps
         while IFS='|' read -r app_name app_desktop; do
             echo -e "  ${YELLOW}•${NC} ${app_name}"
