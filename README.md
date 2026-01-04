@@ -302,6 +302,7 @@ The main entry point for all backup/restore operations. This wrapper delegates t
 ./kde-backup backup [OPTIONS]
 ./kde-backup restore BACKUP_DIR [OPTIONS]
 ./kde-backup validate BACKUP_DIR
+./kde-backup update
 ./kde-backup help
 ```
 
@@ -322,20 +323,29 @@ The main entry point for all backup/restore operations. This wrapper delegates t
 # Restore with re-downloading themes from repositories
 ./kde-backup restore backup-20250104-120000 --re-download-themes
 
+# Manually update to latest version from git
+./kde-backup update
+
 # Get help
 ./kde-backup help
 ./kde-backup backup --help
 ./kde-backup restore --help
 ```
 
-**Automatic Version Check:**
-The wrapper script automatically checks if you're running the latest version from the git repository. If a newer version is available on your current branch, it will:
-- Display a warning with current and latest commit hashes
-- Prompt you to update: "Update to latest version now? (y/n)"
-- If you choose 'y', it will pull the latest changes and re-run your command
-- If you choose 'n', it continues with the current version
+**Version Management:**
+- **Automatic Version Check:** The wrapper script automatically checks if you're running the latest version from the git repository when you run any command. If a newer version is available on your current branch, it will:
+  - Display a warning with current and latest commit hashes
+  - Prompt you to update: "Update to latest version now? (y/n)"
+  - If you choose 'y', it will pull the latest changes and re-run your command
+  - If you choose 'n', it continues with the current version
 
-This feature only works when the script is in a git repository with a remote configured. It checks the current branch against the remote branch.
+- **Manual Update:** Use `./kde-backup update` to manually check for and update to the latest version:
+  - Fetches latest changes from the remote repository
+  - Compares local and remote commits
+  - Prompts to pull if updates are available
+  - Shows current and new version information
+
+Both features only work when the script is in a git repository with a remote configured. They check the current branch against the remote branch.
 
 **Note:** The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details. Use the wrapper for all operations.
 
