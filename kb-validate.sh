@@ -5,7 +5,7 @@
 # 
 # Validates backup integrity and compatibility before restore.
 #
-# Usage: ./kde-plasma-6-validate.sh BACKUP_DIR
+# Usage: ./kb-validate.sh BACKUP_DIR
 ###############################################################################
 
 set -euo pipefail

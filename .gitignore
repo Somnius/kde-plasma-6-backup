@@ -10,9 +10,9 @@ backup-*/
 
 # Keep only the scripts and documentation
 # Scripts:
-# - kde-plasma-6 (wrapper)
-# - kde-plasma-6-backup.sh
-# - kde-plasma-6-restore.sh
-# - kde-plasma-6-validate.sh
+# - kde-backup (wrapper)
+# - kb-backup.sh
+# - kb-restore.sh
+# - kb-validate.sh
 # - README.md
 

@@ -5,7 +5,7 @@
 # 
 # This script restores KDE Plasma 6 settings from a backup.
 #
-# Usage: ./kde-plasma-6-restore.sh BACKUP_DIR [OPTIONS]
+# Usage: ./kb-restore.sh BACKUP_DIR [OPTIONS]
 #   --re-download-themes    Re-download themes/icons from repositories instead of restoring files
 #   --skip-user-resources   Skip restoring user-installed themes/icons (only restore config)
 #   --dry-run               Show what would be restored without making changes

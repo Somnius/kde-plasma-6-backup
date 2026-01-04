@@ -38,15 +38,15 @@ While the scripts include cross-distribution package manager detection, package 
 
 ## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
-**Always use the `kde-plasma-6` wrapper script for all operations:**
+**Always use the `kde-backup` wrapper script for all operations:**
 
 ```bash
-./kde-plasma-6 backup    # Create backup
-./kde-plasma-6 validate  # Validate backup
-./kde-plasma-6 restore   # Restore backup
+./kde-backup backup    # Create backup
+./kde-backup validate  # Validate backup
+./kde-backup restore   # Restore backup
 ```
 
-The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details and should be accessed through the wrapper only.
+The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details and should be accessed through the wrapper only.
 
 ## Table of Contents
 
@@ -75,8 +75,8 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 ### Create a Backup
 
 ```bash
-cd ~/scripts/kde-plasma-6_backup
-./kde-plasma-6 backup
+cd ~/scripts/kde-plasma-6-backup
+./kde-backup backup
 ```
 
 Creates a timestamped backup directory (e.g., `backup-20250104-120000`) and optionally compresses it.
@@ -84,7 +84,7 @@ Creates a timestamped backup directory (e.g., `backup-20250104-120000`) and opti
 ### Validate a Backup (Recommended Before Restore)
 
 ```bash
-./kde-plasma-6 validate backup-20250104-120000
+./kde-backup validate backup-20250104-120000
 ```
 
 Checks backup integrity and compatibility before restoring.
@@ -93,16 +93,16 @@ Checks backup integrity and compatibility before restoring.
 
 ```bash
 # First validate (recommended)
-./kde-plasma-6 validate backup-20250104-120000
+./kde-backup validate backup-20250104-120000
 
 # Then restore (with safety options for different hardware)
-./kde-plasma-6 restore backup-20250104-120000 --skip-display-config
+./kde-backup restore backup-20250104-120000 --skip-display-config
 
 # Or restore with themes re-downloaded from repositories
-./kde-plasma-6 restore backup-20250104-120000 --re-download-themes
+./kde-backup restore backup-20250104-120000 --re-download-themes
 ```
 
-**Note:** The `kde-plasma-6` wrapper script is the recommended interface. Individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details and should be accessed through the wrapper.
+**Note:** The `kde-backup` wrapper script is the recommended interface. Individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details and should be accessed through the wrapper.
 
 ## Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
@@ -154,7 +154,7 @@ Detection works by checking for package manager commands and `/etc/os-release` t
    - Use `--dry-run` to see exactly what the restore will do
 
 6. **Validation Script**
-   - Standalone validation script (`kde-plasma-6-validate.sh`)
+   - Standalone validation script (`kb-validate.sh`)
    - Check backup integrity before attempting restore
    - Identifies potential issues early
 
@@ -181,21 +181,21 @@ Detection works by checking for package manager commands and `/etc/os-release` t
 
 1. **Validate the backup:**
    ```bash
-   ./kde-plasma-6-validate.sh backup-YYYYMMDD-HHMMSS
+   ./kb-validate.sh backup-YYYYMMDD-HHMMSS
    ```
 
 2. **Dry-run to preview:**
    ```bash
-   ./kde-plasma-6-restore.sh backup-YYYYMMDD-HHMMSS --dry-run
+   ./kb-restore.sh backup-YYYYMMDD-HHMMSS --dry-run
    ```
 
 3. **Restore with safety options:**
    ```bash
    # For different hardware (recommended):
-   ./kde-plasma-6-restore.sh backup-YYYYMMDD-HHMMSS --skip-display-config
+   ./kb-restore.sh backup-YYYYMMDD-HHMMSS --skip-display-config
    
    # For same hardware:
-   ./kde-plasma-6-restore.sh backup-YYYYMMDD-HHMMSS
+   ./kb-restore.sh backup-YYYYMMDD-HHMMSS
    ```
 
 4. **After restore:**
@@ -207,47 +207,47 @@ Detection works by checking for package manager commands and `/etc/os-release` t
 
 ## Scripts Documentation <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
-### `kde-plasma-6` (Main Wrapper - **Use This**)
+### `kde-backup` (Main Wrapper - **Use This**)
 
 The main entry point for all backup/restore operations. This wrapper delegates to the appropriate internal scripts.
 
 **Usage:**
 ```bash
-./kde-plasma-6 backup [OPTIONS]
-./kde-plasma-6 restore BACKUP_DIR [OPTIONS]
-./kde-plasma-6 validate BACKUP_DIR
-./kde-plasma-6 help
+./kde-backup backup [OPTIONS]
+./kde-backup restore BACKUP_DIR [OPTIONS]
+./kde-backup validate BACKUP_DIR
+./kde-backup help
 ```
 
 **Examples:**
 ```bash
 # Create backup
-./kde-plasma-6 backup
+./kde-backup backup
 
 # Validate backup
-./kde-plasma-6 validate backup-20250104-120000
+./kde-backup validate backup-20250104-120000
 
 # Restore backup (with safety options)
-./kde-plasma-6 restore backup-20250104-120000 --skip-display-config
+./kde-backup restore backup-20250104-120000 --skip-display-config
 
 # Restore with re-downloading themes from repositories
-./kde-plasma-6 restore backup-20250104-120000 --re-download-themes
+./kde-backup restore backup-20250104-120000 --re-download-themes
 
 # Get help
-./kde-plasma-6 help
-./kde-plasma-6 backup --help
-./kde-plasma-6 restore --help
+./kde-backup help
+./kde-backup backup --help
+./kde-backup restore --help
 ```
 
-**Note:** The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details. Use the wrapper for all operations.
+**Note:** The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details. Use the wrapper for all operations.
 
 ---
 
 ### Internal Scripts (Advanced Users Only)
 
-The following scripts are called by the wrapper. They are documented here for reference, but you should use the `kde-plasma-6` wrapper instead.
+The following scripts are called by the wrapper. They are documented here for reference, but you should use the `kde-backup` wrapper instead.
 
-#### `kde-plasma-6-backup.sh`
+#### `kb-backup.sh`
 
 Backs up all KDE Plasma 6 settings.
 
@@ -259,20 +259,20 @@ Backs up all KDE Plasma 6 settings.
 **Examples:**
 ```bash
 # Basic backup
-./kde-plasma-6-backup.sh
+./kb-backup.sh
 
 # Backup to specific location without compression
-./kde-plasma-6-backup.sh --output-dir ~/my-backup --no-compress
+./kb-backup.sh --output-dir ~/my-backup --no-compress
 
 # Backup without package list
-./kde-plasma-6-backup.sh --no-packages
+./kb-backup.sh --no-packages
 ```
 
-#### `kde-plasma-6-restore.sh`
+#### `kb-restore.sh`
 
 Restores KDE Plasma 6 settings from a backup.
 
-**Note:** Use `./kde-plasma-6 restore` instead.
+**Note:** Use `./kde-backup restore` instead.
 
 **Options:**
 - `--re-download-themes` - Re-download themes/icons from repositories instead of restoring files
@@ -291,33 +291,33 @@ Restores KDE Plasma 6 settings from a backup.
 **Examples:**
 ```bash
 # Basic restore
-./kde-plasma-6-restore.sh backup-20250104-120000
+./kb-restore.sh backup-20250104-120000
 
 # Restore from compressed backup
-./kde-plasma-6-restore.sh backup-20250104-120000.tar.gz
+./kb-restore.sh backup-20250104-120000.tar.gz
 
 # Re-download themes from repositories (allows updates via Discover)
-./kde-plasma-6-restore.sh backup-20250104-120000 --re-download-themes
+./kb-restore.sh backup-20250104-120000 --re-download-themes
 
 # Only restore configuration, skip themes/icons
-./kde-plasma-6-restore.sh backup-20250104-120000 --skip-user-resources
+./kb-restore.sh backup-20250104-120000 --skip-user-resources
 
 # Preview what would be restored
-./kde-plasma-6-restore.sh backup-20250104-120000 --dry-run
+./kb-restore.sh backup-20250104-120000 --dry-run
 
 # Validate only (no restore)
-./kde-plasma-6-restore.sh backup-20250104-120000 --validate-only
+./kb-restore.sh backup-20250104-120000 --validate-only
 ```
 
-#### `kde-plasma-6-validate.sh`
+#### `kb-validate.sh`
 
 Validates backup integrity and compatibility.
 
-**Note:** Use `./kde-plasma-6 validate` instead.
+**Note:** Use `./kde-backup validate` instead.
 
 **Usage:**
 ```bash
-./kde-plasma-6-validate.sh backup-20250104-120000
+./kb-validate.sh backup-20250104-120000
 ```
 
 **What it checks:**
@@ -341,10 +341,10 @@ Step-by-step guide to test the backup and restore scripts on your current system
 ### Step 1: Create a Test Backup
 
 ```bash
-cd ~/scripts/kde-plasma-6_backup
+cd ~/scripts/kde-plasma-6-backup
 
 # Create a backup (this is safe, only reads your config)
-./kde-plasma-6 backup
+./kde-backup backup
 ```
 
 **Expected output:**
@@ -358,7 +358,7 @@ cd ~/scripts/kde-plasma-6_backup
 
 ```bash
 # Replace with your actual backup directory name
-./kde-plasma-6 validate backup-20250104-120000
+./kde-backup validate backup-20250104-120000
 ```
 
 **What to check:**
@@ -373,7 +373,7 @@ cd ~/scripts/kde-plasma-6_backup
 This shows what would be restored **without making any changes**:
 
 ```bash
-./kde-plasma-6 restore backup-20250104-120000 --dry-run
+./kde-backup restore backup-20250104-120000 --dry-run
 ```
 
 **What to check:**
@@ -388,7 +388,7 @@ This shows what would be restored **without making any changes**:
 Another way to test validation:
 
 ```bash
-./kde-plasma-6 restore backup-20250104-120000 --validate-only
+./kde-backup restore backup-20250104-120000 --validate-only
 ```
 
 **Expected:** Same validation as Step 2, but through the restore script.
@@ -419,7 +419,7 @@ Since you're testing on the same system, this should restore your current settin
 
 ```bash
 # The script automatically backs up existing files before overwriting
-./kde-plasma-6 restore backup-20250104-120000
+./kde-backup restore backup-20250104-120000
 ```
 
 **What happens:**
@@ -440,18 +440,18 @@ Since you're testing on the same system, this should restore your current settin
 For a quick test without full restore:
 
 ```bash
-cd ~/scripts/kde-plasma-6_backup
+cd ~/scripts/kde-plasma-6-backup
 
 # 1. Create backup
-./kde-plasma-6 backup
+./kde-backup backup
 
 # 2. Note the backup directory name (e.g., backup-20250104-120000)
 
 # 3. Validate
-./kde-plasma-6 validate backup-20250104-120000
+./kde-backup validate backup-20250104-120000
 
 # 4. Dry-run (preview)
-./kde-plasma-6 restore backup-20250104-120000 --dry-run
+./kde-backup restore backup-20250104-120000 --dry-run
 
 # Done! No changes made to your system.
 ```
@@ -738,23 +738,23 @@ ls /usr/share/icons/
 
 ```bash
 # Create backup
-cd ~/scripts/kde-plasma-6_backup
-./kde-plasma-6 backup
+cd ~/scripts/kde-plasma-6-backup
+./kde-backup backup
 
 # Validate backup
-./kde-plasma-6 validate backup-YYYYMMDD-HHMMSS
+./kde-backup validate backup-YYYYMMDD-HHMMSS
 
 # Restore backup (skip display config for different hardware)
-./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --skip-display-config
+./kde-backup restore backup-YYYYMMDD-HHMMSS --skip-display-config
 
 # Restore with themes re-downloaded from repositories
-./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --re-download-themes
+./kde-backup restore backup-YYYYMMDD-HHMMSS --re-download-themes
 
 # Dry-run (preview)
-./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --dry-run
+./kde-backup restore backup-YYYYMMDD-HHMMSS --dry-run
 
 # Get help
-./kde-plasma-6 help
+./kde-backup help
 ```
 
 ### Apply Settings After Changes

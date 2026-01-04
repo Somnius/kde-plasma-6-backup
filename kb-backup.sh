@@ -9,7 +9,7 @@
 # - Window manager settings, panel configurations
 # - User-installed themes/icons/color schemes
 #
-# Usage: ./kde-plasma-6-backup.sh [OPTIONS]
+# Usage: ./kb-backup.sh [OPTIONS]
 #   --output-dir DIR    Specify backup directory (default: ./backup-YYYYMMDD-HHMMSS)
 #   --no-compress       Don't compress the backup
 #   --include-packages  Include package list for reinstallation
@@ -473,5 +473,5 @@ if [[ "$COMPRESS" == true ]]; then
 fi
 echo ""
 echo -e "${YELLOW}To restore this backup, run:${NC}"
-echo -e "${YELLOW}  ./kde-plasma-6 restore ${BACKUP_DIR}${NC}"
+echo -e "${YELLOW}  ./kde-backup restore ${BACKUP_DIR}${NC}"
 

@@ -7,9 +7,9 @@
 # It delegates to the appropriate internal scripts.
 #
 # Usage:
-#   ./kde-plasma-6 backup [OPTIONS]
-#   ./kde-plasma-6 restore BACKUP_DIR [OPTIONS]
-#   ./kde-plasma-6 validate BACKUP_DIR
+#   ./kde-backup backup [OPTIONS]
+#   ./kde-backup restore BACKUP_DIR [OPTIONS]
+#   ./kde-backup validate BACKUP_DIR
 ###############################################################################
 
 set -euo pipefail
@@ -61,13 +61,13 @@ shift
 # Route to appropriate script
 case "$COMMAND" in
     backup)
-        exec "${SCRIPT_DIR}/kde-plasma-6-backup.sh" "$@"
+        exec "${SCRIPT_DIR}/kb-backup.sh" "$@"
         ;;
     restore)
-        exec "${SCRIPT_DIR}/kde-plasma-6-restore.sh" "$@"
+        exec "${SCRIPT_DIR}/kb-restore.sh" "$@"
         ;;
     validate)
-        exec "${SCRIPT_DIR}/kde-plasma-6-validate.sh" "$@"
+        exec "${SCRIPT_DIR}/kb-validate.sh" "$@"
         ;;
     help|--help|-h)
         show_usage
