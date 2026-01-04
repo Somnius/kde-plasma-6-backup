@@ -75,7 +75,7 @@ The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are i
 ### Create a Backup
 
 ```bash
-cd ~/scripts/kde-plasma-6-backup
+cd ~/kde-plasma-6-backup
 ./kde-backup backup
 ```
 
@@ -341,7 +341,7 @@ Step-by-step guide to test the backup and restore scripts on your current system
 ### Step 1: Create a Test Backup
 
 ```bash
-cd ~/scripts/kde-plasma-6-backup
+cd ~/kde-plasma-6-backup
 
 # Create a backup (this is safe, only reads your config)
 ./kde-backup backup
@@ -440,7 +440,7 @@ Since you're testing on the same system, this should restore your current settin
 For a quick test without full restore:
 
 ```bash
-cd ~/scripts/kde-plasma-6-backup
+cd ~/kde-plasma-6-backup
 
 # 1. Create backup
 ./kde-backup backup
@@ -738,7 +738,7 @@ ls /usr/share/icons/
 
 ```bash
 # Create backup
-cd ~/scripts/kde-plasma-6-backup
+cd ~/kde-plasma-6-backup
 ./kde-backup backup
 
 # Validate backup
