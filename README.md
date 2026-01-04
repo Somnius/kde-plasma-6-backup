@@ -17,7 +17,7 @@ Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, c
 
 ---
 
-## ⚠️ Important Limitations <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## ⚠️ Important Limitations {#important-limitations} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 <div style="border: 2px solid #ff6b6b; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
 
@@ -36,7 +36,7 @@ While the scripts include cross-distribution package manager detection, package 
 
 ---
 
-## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## ⚠️ Important: Use the Wrapper Script {#important-use-the-wrapper-script} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 **Always use the `kde-backup` wrapper script for all operations:**
 
@@ -70,7 +70,7 @@ The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are i
 
 ---
 
-## Quick Start <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Quick Start {#quick-start} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Create a Backup
 
@@ -104,7 +104,7 @@ Checks backup integrity and compatibility before restoring.
 
 **Note:** The `kde-backup` wrapper script is the recommended interface. Individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details and should be accessed through the wrapper.
 
-## Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Cross-Distribution Support {#cross-distribution-support} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 The scripts automatically detect and support multiple Linux distributions and their package managers:
 
@@ -120,7 +120,7 @@ Detection works by checking for package manager commands and `/etc/os-release` t
 
 ---
 
-## Safety and Precautions <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Safety and Precautions {#safety-and-precautions} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ⚠️ Is It Safe to Restore on Another System?
 
@@ -205,7 +205,7 @@ Detection works by checking for package manager commands and `/etc/os-release` t
 
 ---
 
-## Scripts Documentation <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Scripts Documentation {#scripts-documentation} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### `kde-backup` (Main Wrapper - **Use This**)
 
@@ -334,7 +334,7 @@ Validates backup integrity and compatibility.
 
 ---
 
-## Testing Guide <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Testing Guide {#testing-guide} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 Step-by-step guide to test the backup and restore scripts on your current system.
 
@@ -512,7 +512,7 @@ You're ready to use the backup for real restoration when needed!
 
 ---
 
-## What Gets Backed Up <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## What Gets Backed Up {#what-gets-backed-up} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ✅ Fully Backed Up and Recoverable
 
@@ -550,7 +550,7 @@ You're ready to use the backup for real restoration when needed!
 
 ---
 
-## What Cannot Be Recovered <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## What Cannot Be Recovered {#what-cannot-be-recovered} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ❌ Not Backed Up (System-Wide Settings)
 
@@ -620,7 +620,7 @@ To ensure complete restoration:
 
 ---
 
-## Configuration Locations Reference <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Configuration Locations Reference {#configuration-locations-reference} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Configuration Files (`~/.config/`)
 
@@ -706,7 +706,7 @@ System-wide themes, icons, and resources are installed in `/usr/share/`:
 
 ---
 
-## Quick Reference Commands <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Quick Reference Commands {#quick-reference-commands} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### View Current Settings
 
@@ -772,7 +772,7 @@ qdbus org.kde.KWin /KWin reconfigure
 
 ---
 
-## Troubleshooting <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Troubleshooting {#troubleshooting} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Settings Not Applied After Restore
 
@@ -842,7 +842,7 @@ If validation reports errors:
 
 ---
 
-## Manual Backup/Restore <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Manual Backup/Restore {#manual-backuprestore} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 If you prefer to manually backup specific settings:
 
@@ -886,7 +886,7 @@ cp -r ~/backup/icons ~/.local/share/
 
 ---
 
-## Backup Structure <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Backup Structure {#backup-structure} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 A backup directory contains:
 
@@ -912,7 +912,7 @@ backup-YYYYMMDD-HHMMSS/
 
 ---
 
-## Tips and Best Practices <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Tips and Best Practices {#tips-and-best-practices} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 1. **Regular Backups:** Create backups after making significant changes to your setup
 2. **Test Restores:** Test restoring on a test system or VM before you need it
@@ -924,13 +924,13 @@ backup-YYYYMMDD-HHMMSS/
 
 ---
 
-## References <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## References {#references} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 - [KDE UserBase - Configuration Files](https://userbase.kde.org/KDE_System_Administration/Configuration_Files)
 - [Plasma Desktop Configuration](https://develop.kde.org/docs/plasma/configuration/)
 
 ---
 
-## License <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## License {#license} <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
