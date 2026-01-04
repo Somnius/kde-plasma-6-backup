@@ -169,21 +169,6 @@ get_package_manager_name() {
     esac
 }
 
-# Reconfigure KWin to apply window decorations and settings
-reconfigure_kwin() {
-    if command -v qdbus >/dev/null 2>&1; then
-        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
-        qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
-            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
-        }
-    elif command -v qdbus-qt6 >/dev/null 2>&1; then
-        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
-        qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
-            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
-        }
-    fi
-}
-
 # Default values
 RE_DOWNLOAD=false
 SKIP_USER_RESOURCES=false
