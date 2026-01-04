@@ -19,6 +19,7 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Cross-Distribution Support](#cross-distribution-support)
 - [Safety and Precautions](#safety-and-precautions)
 - [Scripts Documentation](#scripts-documentation)
 - [Testing Guide](#testing-guide)
@@ -68,6 +69,20 @@ Checks backup integrity and compatibility before restoring.
 ```
 
 **Note:** The `kde-plasma-6` wrapper script is the recommended interface. Individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details and should be accessed through the wrapper.
+
+### Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+
+The scripts automatically detect and support multiple Linux distributions and their package managers:
+
+- **Arch-based:** Arch Linux, Manjaro, CachyOS, EndeavourOS (uses `pacman`)
+- **Debian-based:** Debian, Ubuntu, PikaOS, Linux Mint, Pop!_OS, Elementary OS (uses `apt`)
+- **Fedora-based:** Fedora, RHEL, CentOS (uses `dnf` or `yum`)
+- **openSUSE:** openSUSE (uses `zypper`)
+- **Gentoo:** Gentoo Linux (uses `emerge`)
+
+Detection works by checking for package manager commands and `/etc/os-release` to identify base distributions, ensuring compatibility with niche distributions derived from major ones.
+
+**Note:** Package names may differ between distributions. When using `--re-download-themes`, the script will attempt to install packages, but some may fail if names differ. This is expected and you may need to install packages manually.
 
 ---
 
@@ -653,7 +668,7 @@ System-wide themes, icons, and resources are installed in `/usr/share/`:
 - `/usr/share/wallpapers/` - System wallpapers
 - `/usr/share/aurorae/themes/` - System window decorations
 
-**Note:** System-wide resources are managed by package managers and don't need to be backed up. They can be reinstalled via `apt` or Discover. The backup includes a package list for easy reinstallation.
+**Note:** System-wide resources are managed by package managers and don't need to be backed up. They can be reinstalled via your distribution's package manager (apt, pacman, dnf, etc.) or Discover. The backup includes a package list for easy reinstallation, and the restore script automatically detects and uses the correct package manager.
 
 ---
 

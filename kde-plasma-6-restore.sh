@@ -20,23 +20,111 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Detect package manager
+# Detect package manager (handles niche distros via /etc/os-release)
 detect_package_manager() {
+    # First check if package manager commands exist
     if command -v pacman >/dev/null 2>&1; then
         echo "pacman"
+        return
     elif command -v apt >/dev/null 2>&1; then
         echo "apt"
+        return
     elif command -v dnf >/dev/null 2>&1; then
         echo "dnf"
+        return
     elif command -v yum >/dev/null 2>&1; then
         echo "yum"
+        return
     elif command -v zypper >/dev/null 2>&1; then
         echo "zypper"
+        return
     elif command -v emerge >/dev/null 2>&1; then
         echo "emerge"
-    else
-        echo "unknown"
+        return
     fi
+    
+    # If no package manager found, check /etc/os-release for base distribution
+    # This handles niche distros like PikaOS (Debian-based), CachyOS (Arch-based), etc.
+    if [[ -f /etc/os-release ]]; then
+        local id_like=$(grep "^ID_LIKE=" /etc/os-release 2>/dev/null | cut -d'=' -f2 | tr -d '"' | cut -d' ' -f1)
+        local id=$(grep "^ID=" /etc/os-release 2>/dev/null | cut -d'=' -f2 | tr -d '"')
+        
+        # Check ID_LIKE first (more reliable for derived distros)
+        case "$id_like" in
+            arch|archlinux)
+                if command -v pacman >/dev/null 2>&1; then
+                    echo "pacman"
+                    return
+                fi
+                ;;
+            debian|ubuntu)
+                if command -v apt >/dev/null 2>&1; then
+                    echo "apt"
+                    return
+                fi
+                ;;
+            fedora|rhel|centos)
+                if command -v dnf >/dev/null 2>&1; then
+                    echo "dnf"
+                    return
+                elif command -v yum >/dev/null 2>&1; then
+                    echo "yum"
+                    return
+                fi
+                ;;
+            suse|opensuse)
+                if command -v zypper >/dev/null 2>&1; then
+                    echo "zypper"
+                    return
+                fi
+                ;;
+            gentoo)
+                if command -v emerge >/dev/null 2>&1; then
+                    echo "emerge"
+                    return
+                fi
+                ;;
+        esac
+        
+        # Fallback to ID if ID_LIKE didn't match
+        case "$id" in
+            arch|archlinux|manjaro|cachyos|endeavouros)
+                if command -v pacman >/dev/null 2>&1; then
+                    echo "pacman"
+                    return
+                fi
+                ;;
+            debian|ubuntu|pika|pikaos|mint|pop|elementary)
+                if command -v apt >/dev/null 2>&1; then
+                    echo "apt"
+                    return
+                fi
+                ;;
+            fedora|rhel|centos)
+                if command -v dnf >/dev/null 2>&1; then
+                    echo "dnf"
+                    return
+                elif command -v yum >/dev/null 2>&1; then
+                    echo "yum"
+                    return
+                fi
+                ;;
+            opensuse*|suse)
+                if command -v zypper >/dev/null 2>&1; then
+                    echo "zypper"
+                    return
+                fi
+                ;;
+            gentoo)
+                if command -v emerge >/dev/null 2>&1; then
+                    echo "emerge"
+                    return
+                fi
+                ;;
+        esac
+    fi
+    
+    echo "unknown"
 }
 
 # Get install command for package manager
