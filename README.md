@@ -788,9 +788,29 @@ qdbus org.kde.KWin /KWin reconfigure
 
 ### Settings Not Applied After Restore
 
-1. **Log out and log back in** - Many settings require a new session
+1. **Log out and log back in** - Many settings require a new session (most reliable)
 2. **Restart Plasma:** `killall plasmashell && kstart plasmashell`
-3. **Reboot** - Most reliable way to ensure all settings are applied
+3. **Reconfigure KWin:** `qdbus org.kde.KWin /KWin reconfigure` (for window decorations)
+4. **Reboot** - Most reliable way to ensure all settings are applied
+
+### Window Decorations Not Showing After Restore
+
+Window decorations are restored but may not appear until:
+1. **Log out and log back in** (recommended)
+2. **Reconfigure KWin:** `qdbus org.kde.KWin /KWin reconfigure`
+3. **Reboot** the system
+
+The restore script automatically reconfigures KWin after restoring window manager settings, but a full logout/login is often required for decorations to appear correctly.
+
+### Panel Transparency Issues
+
+If panel transparency appears different after restore:
+1. **Check the backup:** Panel transparency is stored in `plasma-org.kde.plasma.desktop-appletsrc`
+2. **Verify the file was restored:** Check `~/.config/plasma-org.kde.plasma.desktop-appletsrc`
+3. **Restart Plasma:** `killall plasmashell && kstart plasmashell`
+4. **Log out and log back in** - Some transparency settings require a new session
+
+If transparency is still incorrect, the VM environment may have different compositor settings. Check System Settings → Appearance → Desktop Effects.
 
 ### Display Issues After Restore
 

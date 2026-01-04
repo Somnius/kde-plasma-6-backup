@@ -720,10 +720,10 @@ else
     echo -e "${BLUE}--- Restoring configuration files ---${NC}"
 
     # Restore core configuration files
-restore_config "kdeglobals" "Global KDE settings"
-restore_config "plasmarc" "Plasma theme settings"
-restore_config "plasmashellrc" "Plasma shell configuration"
-restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets"
+    restore_config "kdeglobals" "Global KDE settings"
+    restore_config "plasmarc" "Plasma theme and wallpaper settings"
+    restore_config "plasmashellrc" "Plasma shell configuration"
+    restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets (includes panel transparency)"
 restore_config "plasma-localerc" "Regional and language settings"
 restore_config "plasma-workspace" "Workspace environment"
 restore_config "plasmanotifyrc" "Notification settings"
@@ -885,7 +885,7 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
         if [[ -d "${BACKUP_DIR}/local-share/kded6" ]]; then
             restore_item "${BACKUP_DIR}/local-share/kded6" \
                         "${HOME}/.local/share/kded6" \
-                        "KDE6 daemon data"
+                        "cKDE6 daemon data"
         fi
         
         if [[ -d "${BACKUP_DIR}/local-share/knewstuff3" ]]; then
@@ -897,14 +897,39 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
     fi
 fi
 
+# Reconfigure KWin to apply window decorations and settings
+reconfigure_kwin() {
+    if command -v qdbus >/dev/null 2>&1; then
+        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+        qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
+            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+        }
+    elif command -v qdbus-qt6 >/dev/null 2>&1; then
+        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+        qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
+            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+        }
+    fi
+}
+
 # Common completion message for both modes
 if [[ "$DRY_RUN" == false ]]; then
     echo ""
     echo -e "${GREEN}=== Restore completed! ===${NC}"
+    
+    # Reconfigure KWin if window manager settings were restored
+    if [[ "$INTERACTIVE" == false ]] || [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
+        reconfigure_kwin
+    fi
+    
+    echo ""
     echo -e "${YELLOW}You may need to:${NC}"
-    echo -e "${YELLOW}  1. Log out and log back in for some settings to take effect${NC}"
+    echo -e "${YELLOW}  1. Log out and log back in for some settings to take effect (recommended)${NC}"
     echo -e "${YELLOW}  2. Restart Plasma: killall plasmashell && kstart plasmashell${NC}"
     echo -e "${YELLOW}  3. Or simply reboot your system${NC}"
+    echo ""
+    echo -e "${YELLOW}Note: Window decorations may require logout/login to appear correctly${NC}"
+    echo -e "${YELLOW}Note: Panel transparency settings are in plasma-org.kde.plasma.desktop-appletsrc${NC}"
     
     # Offer to restart Plasma
     read -p "Restart Plasma shell now? (y/n): " -n 1 -r
