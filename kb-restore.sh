@@ -1330,7 +1330,7 @@ if [[ "$DRY_RUN" == false ]]; then
     echo ""
     echo -e "${BLUE}--- Checking for missing applications ---${NC}"
     
-    missing_autostart=$(detect_missing_autostart_apps)
+    missing_autostart=$(detect_missing_autostart_apps 2>/dev/null || echo "")
     if [[ -n "$missing_autostart" ]]; then
         echo ""
         echo -e "${YELLOW}Missing autostart applications detected:${NC}"
