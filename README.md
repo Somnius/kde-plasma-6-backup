@@ -387,7 +387,7 @@ Restores KDE Plasma 6 settings from a backup.
   - Includes multi-stage prompts for restore options and missing app detection
   - Automatically detects and offers to install missing autostart/default applications
 - `--re-download-themes` - Re-download themes/icons from repositories instead of restoring files
-  - Can also be selected during interactive mode
+  - Can also be selected during interactive mode or prompted in non-interactive mode
 - `--skip-user-resources` - Only restore config files, skip themes/icons
 - `--skip-display-config` - Skip display configuration (safe for different hardware)
   - Can also be selected during interactive mode
@@ -397,6 +397,12 @@ Restores KDE Plasma 6 settings from a backup.
   - No files are modified, no applications are installed
 - `--validate-only` - Validate backup without restoring
 
+**Non-Interactive Mode Prompts:**
+When running without `--interactive`, the script will still prompt you for:
+1. **Confirmation to continue** with the restore
+2. **Re-download themes** (if `--re-download-themes` was not specified and `--skip-user-resources` is not set)
+3. **Restart Plasma shell** at the end (after restore completes)
+
 **Safety Features:**
 - Automatically validates backup before restore
 - Warns about hardware-specific settings
@@ -405,6 +411,7 @@ Restores KDE Plasma 6 settings from a backup.
 - Checks Plasma version compatibility
 - Robust error handling: continues restoring other categories even if one fails
 - Detailed progress output showing which categories are being restored
+- Post-restore prompts for missing applications and Plasma shell restart
 
 **Examples:**
 ```bash

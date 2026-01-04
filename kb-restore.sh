@@ -847,6 +847,15 @@ if [[ "$DRY_RUN" == false ]] && [[ "$INTERACTIVE" == false ]]; then
         echo "Restore cancelled."
         exit 0
     fi
+    
+    # Ask about re-download themes if not already set and user resources are not skipped
+    if [[ "$SKIP_USER_RESOURCES" == false ]] && [[ "$RE_DOWNLOAD" == false ]]; then
+        read -p "Re-download themes/icons from repositories instead of restoring files? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            RE_DOWNLOAD=true
+        fi
+    fi
 fi
 
 # Perform restore based on mode
