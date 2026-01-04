@@ -2,6 +2,8 @@
 
 Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, configurations, and user preferences.
 
+**License:** [MIT](LICENSE)
+
 ## ⚠️ Important: Use the Wrapper Script
 
 **Always use the `kde-plasma-6` wrapper script for all operations:**
@@ -864,3 +866,9 @@ backup-YYYYMMDD-HHMMSS/
 
 - [KDE UserBase - Configuration Files](https://userbase.kde.org/KDE_System_Administration/Configuration_Files)
 - [Plasma Desktop Configuration](https://develop.kde.org/docs/plasma/configuration/)
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
