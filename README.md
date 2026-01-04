@@ -55,6 +55,7 @@ The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are i
 - [Important Limitations](#important-limitations)
 - [Important: Use the Wrapper Script](#important-use-the-wrapper-script)
 - [Quick Start](#quick-start)
+- [Interactive Selective Restore](#interactive-selective-restore)
 - [Cross-Distribution Support](#cross-distribution-support)
 - [Safety and Precautions](#safety-and-precautions)
 - [Scripts Documentation](#scripts-documentation)
@@ -106,6 +107,56 @@ Checks backup integrity and compatibility before restoring.
 ```
 
 **Note:** The `kde-backup` wrapper script is the recommended interface. Individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details and should be accessed through the wrapper.
+
+---
+
+<a name="interactive-selective-restore"></a>
+## Interactive Selective Restore <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+
+Version 1.2-beta introduces interactive restore mode, allowing you to selectively choose which categories of settings to restore.
+
+**Usage:**
+```bash
+./kde-backup restore backup-YYYYMMDD-HHMMSS --interactive
+```
+
+**How it works:**
+1. The script displays all available categories with item counts
+2. You can select multiple categories (comma-separated numbers) or choose "Restore All"
+3. Selected categories are displayed for confirmation before restore
+4. Only the selected categories are restored
+
+**Available Categories:**
+- **Appearance** - Themes, colors, icons, fonts, wallpapers, window decorations
+- **Keyboard** - Keyboard shortcuts, layouts, input device settings
+- **Language** - Regional and language settings
+- **Window Manager** - KWin settings, window rules, display configuration
+- **Desktop** - Panel layout, applets, workspace settings
+- **Notifications** - Notification settings
+- **Applications** - KDE application settings, autostart entries
+- **Services** - KDE services, activity manager, desktop portal
+- **Connectivity** - KDE Connect settings
+- **KDE6 Data** - KDE6 daemon data, KNewStuff registries
+
+**Example:**
+```bash
+./kde-backup restore backup-20250104-120000 --interactive
+
+# You'll see a menu like:
+# [1] Appearance (8 items)
+# [2] Keyboard (3 items)
+# [3] Language (1 items)
+# [4] Window Manager (3 items)
+# ...
+# [10] Restore All Categories
+# [0] Cancel
+#
+# Enter your choices: 1,2,4
+```
+
+**Note:** Interactive mode requires a backup created with version 1.2-beta or later (includes `metadata/categories.txt`). Older backups will fall back to full restore.
+
+---
 
 <a name="cross-distribution-support"></a>
 ## Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
@@ -236,6 +287,9 @@ The main entry point for all backup/restore operations. This wrapper delegates t
 # Restore backup (with safety options)
 ./kde-backup restore backup-20250104-120000 --skip-display-config
 
+# Interactive selective restore (choose what to restore)
+./kde-backup restore backup-20250104-120000 --interactive
+
 # Restore with re-downloading themes from repositories
 ./kde-backup restore backup-20250104-120000 --re-download-themes
 
@@ -281,6 +335,7 @@ Restores KDE Plasma 6 settings from a backup.
 **Note:** Use `./kde-backup restore` instead.
 
 **Options:**
+- `--interactive, -i` - Interactive TUI to selectively choose which categories to restore
 - `--re-download-themes` - Re-download themes/icons from repositories instead of restoring files
 - `--skip-user-resources` - Only restore config files, skip themes/icons
 - `--skip-display-config` - Skip display configuration (safe for different hardware)
@@ -304,6 +359,9 @@ Restores KDE Plasma 6 settings from a backup.
 
 # Re-download themes from repositories (allows updates via Discover)
 ./kb-restore.sh backup-20250104-120000 --re-download-themes
+
+# Interactive selective restore (choose categories)
+./kb-restore.sh backup-20250104-120000 --interactive
 
 # Only restore configuration, skip themes/icons
 ./kb-restore.sh backup-20250104-120000 --skip-user-resources
@@ -758,6 +816,9 @@ cd ~/kde-plasma-6-backup
 # Restore backup (skip display config for different hardware)
 ./kde-backup restore backup-YYYYMMDD-HHMMSS --skip-display-config
 
+# Interactive selective restore (choose what to restore)
+./kde-backup restore backup-YYYYMMDD-HHMMSS --interactive
+
 # Restore with themes re-downloaded from repositories
 ./kde-backup restore backup-YYYYMMDD-HHMMSS --re-download-themes
 
@@ -774,11 +835,14 @@ cd ~/kde-plasma-6-backup
 # Restart Plasma Shell
 killall plasmashell && kstart plasmashell
 
-# Reload KWin (Window Manager)
+# Reload KWin (Window Manager) - applies window decorations
 qdbus org.kde.KWin /KWin reconfigure
+# Or for Plasma 6:
+qdbus-qt6 org.kde.KWin /KWin reconfigure
 
 # Full reload (logout/login recommended)
-# Most reliable way to apply all settings
+# Most reliable way to apply all settings, especially window decorations
+# The restore script automatically reconfigures KWin, but logout/login is often still needed
 ```
 
 ---
@@ -941,6 +1005,7 @@ backup-YYYYMMDD-HHMMSS/
     ├── system-info.txt      # System information
     ├── current-theme-settings.txt  # Current theme settings
     ├── kde-packages.txt     # List of installed packages
+    ├── categories.txt       # Categories metadata (v1.2-beta+, for interactive restore)
     └── manifest.txt         # Complete file list
 ```
 
