@@ -1318,21 +1318,11 @@ else
             fi
         fi
     fi
-    
-    # Non-interactive restore completion message
-    echo ""
-    if [[ "$DRY_RUN" == true ]]; then
-        echo -e "${BLUE}[DRY RUN] === Restore simulation completed! ===${NC}"
-    else
-        echo -e "${GREEN}=== Restore completed! ===${NC}"
-    fi
 fi
 
 
 # Common completion message for both modes
 if [[ "$DRY_RUN" == false ]]; then
-    echo ""
-    echo -e "${GREEN}=== Restore completed! ===${NC}"
     
     # Check for missing autostart applications
     echo ""
