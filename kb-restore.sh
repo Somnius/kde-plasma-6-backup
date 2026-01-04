@@ -851,6 +851,7 @@ fi
 
 # Perform restore based on mode
 if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
+    # Interactive/selective restore mode
     # Selective restore by category - INLINE CODE, NO FUNCTION CALLS
     echo ""
     echo -e "${BLUE}=== Starting Selective Restore ===${NC}"
@@ -1142,78 +1143,78 @@ else
     restore_config "plasmarc" "Plasma theme and wallpaper settings"
     restore_config "plasmashellrc" "Plasma shell configuration"
     restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets (includes panel transparency)"
-restore_config "plasma-localerc" "Regional and language settings"
-restore_config "user-dirs.locale" "User directories locale settings"
-restore_config "plasma-workspace" "Workspace environment"
-restore_config "plasmanotifyrc" "Notification settings"
+    restore_config "plasma-localerc" "Regional and language settings"
+    restore_config "user-dirs.locale" "User directories locale settings"
+    restore_config "plasma-workspace" "Workspace environment"
+    restore_config "plasmanotifyrc" "Notification settings"
 
-# Restore window manager settings
-restore_config "kwinrc" "Window manager settings"
-restore_config "kwinrulesrc" "Window rules"
+    # Restore window manager settings
+    restore_config "kwinrc" "Window manager settings"
+    restore_config "kwinrulesrc" "Window rules"
 
-# Display configuration is hardware-specific - skip if requested or on different hardware
-if [[ "$SKIP_DISPLAY_CONFIG" == false ]]; then
-    if [[ -f "${BACKUP_DIR}/config/kwinoutputconfig.json" ]]; then
-        echo -e "${YELLOW}WARNING: Restoring display configuration (kwinoutputconfig.json)${NC}"
-        echo -e "${YELLOW}  This may cause display issues on different hardware${NC}"
-        if [[ "$DRY_RUN" == false ]]; then
-            read -p "  Continue with display config restore? (y/n): " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                restore_config "kwinoutputconfig.json" "Display configuration"
+    # Display configuration is hardware-specific - skip if requested or on different hardware
+    if [[ "$SKIP_DISPLAY_CONFIG" == false ]]; then
+        if [[ -f "${BACKUP_DIR}/config/kwinoutputconfig.json" ]]; then
+            echo -e "${YELLOW}WARNING: Restoring display configuration (kwinoutputconfig.json)${NC}"
+            echo -e "${YELLOW}  This may cause display issues on different hardware${NC}"
+            if [[ "$DRY_RUN" == false ]]; then
+                read -p "  Continue with display config restore? (y/n): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    restore_config "kwinoutputconfig.json" "Display configuration"
+                else
+                    echo -e "${YELLOW}Skipping display configuration${NC}"
+                fi
             else
-                echo -e "${YELLOW}Skipping display configuration${NC}"
+                restore_config "kwinoutputconfig.json" "Display configuration"
             fi
-        else
-            restore_config "kwinoutputconfig.json" "Display configuration"
         fi
+    else
+        echo -e "${YELLOW}Skipping display configuration (hardware-safe mode)${NC}"
     fi
-else
-    echo -e "${YELLOW}Skipping display configuration (hardware-safe mode)${NC}"
-fi
 
-# Restore keyboard and input
-restore_config "kglobalshortcutsrc" "Global keyboard shortcuts"
-restore_config "kxkbrc" "Keyboard layout settings"
-restore_config "kcminputrc" "Input device settings"
+    # Restore keyboard and input
+    restore_config "kglobalshortcutsrc" "Global keyboard shortcuts"
+    restore_config "kxkbrc" "Keyboard layout settings"
+    restore_config "kcminputrc" "Input device settings"
 
-# Restore KDE services
-restore_config "kded6rc" "KDE daemon configuration"
-restore_config "kded5rc" "KDE daemon configuration (legacy)"
+    # Restore KDE services
+    restore_config "kded6rc" "KDE daemon configuration"
+    restore_config "kded5rc" "KDE daemon configuration (legacy)"
 
-# Restore activity manager
-restore_config "kactivitymanagerdrc" "Activity manager settings"
-restore_config "kactivitymanagerd-statsrc" "Activity manager statistics"
+    # Restore activity manager
+    restore_config "kactivitymanagerdrc" "Activity manager settings"
+    restore_config "kactivitymanagerd-statsrc" "Activity manager statistics"
 
-# Restore desktop portal
-restore_config "xdg-desktop-portal-kderc" "Desktop portal settings"
+    # Restore desktop portal
+    restore_config "xdg-desktop-portal-kderc" "Desktop portal settings"
 
-# Restore other config directories
-if [[ -d "${BACKUP_DIR}/config/kdeconnect" ]]; then
-    restore_item "${BACKUP_DIR}/config/kdeconnect" "${HOME}/.config/kdeconnect" "KDE Connect"
-fi
+    # Restore other config directories
+    if [[ -d "${BACKUP_DIR}/config/kdeconnect" ]]; then
+        restore_item "${BACKUP_DIR}/config/kdeconnect" "${HOME}/.config/kdeconnect" "KDE Connect"
+    fi
 
-if [[ -d "${BACKUP_DIR}/config/kdedefaults" ]]; then
-    restore_item "${BACKUP_DIR}/config/kdedefaults" "${HOME}/.config/kdedefaults" "KDE defaults"
-fi
+    if [[ -d "${BACKUP_DIR}/config/kdedefaults" ]]; then
+        restore_item "${BACKUP_DIR}/config/kdedefaults" "${HOME}/.config/kdedefaults" "KDE defaults"
+    fi
 
-if [[ -d "${BACKUP_DIR}/config/kde.org" ]]; then
-    restore_item "${BACKUP_DIR}/config/kde.org" "${HOME}/.config/kde.org" "KDE application settings"
-fi
+    if [[ -d "${BACKUP_DIR}/config/kde.org" ]]; then
+        restore_item "${BACKUP_DIR}/config/kde.org" "${HOME}/.config/kde.org" "KDE application settings"
+    fi
 
-if [[ -d "${BACKUP_DIR}/config/autostart" ]]; then
-    restore_item "${BACKUP_DIR}/config/autostart" "${HOME}/.config/autostart" "Autostart applications"
-fi
+    if [[ -d "${BACKUP_DIR}/config/autostart" ]]; then
+        restore_item "${BACKUP_DIR}/config/autostart" "${HOME}/.config/autostart" "Autostart applications"
+    fi
 
-# Restore default applications
-restore_config "mimeapps.list" "Default applications for file types"
+    # Restore default applications
+    restore_config "mimeapps.list" "Default applications for file types"
 
-# Restore user-installed resources
-if [[ "$SKIP_USER_RESOURCES" == false ]]; then
-    echo ""
-    echo -e "${BLUE}--- Restoring user-installed themes, icons, and resources ---${NC}"
-    
-    if [[ "$RE_DOWNLOAD" == true ]]; then
+    # Restore user-installed resources
+    if [[ "$SKIP_USER_RESOURCES" == false ]]; then
+        echo ""
+        echo -e "${BLUE}--- Restoring user-installed themes, icons, and resources ---${NC}"
+        
+        if [[ "$RE_DOWNLOAD" == true ]]; then
         echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
         
         # Detect package manager
@@ -1266,56 +1267,56 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
             echo -e "${BLUE}  Use your distribution's package manager${NC}"
         fi
         
-    else
-        # Restore files directly
-        if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/plasma/desktoptheme" \
-                        "${HOME}/.local/share/plasma/desktoptheme" \
-                        "Plasma desktop themes"
+        else
+            # Restore files directly
+            if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/plasma/desktoptheme" \
+                            "${HOME}/.local/share/plasma/desktoptheme" \
+                            "Plasma desktop themes"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/plasma/look-and-feel" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/plasma/look-and-feel" \
+                            "${HOME}/.local/share/plasma/look-and-feel" \
+                            "Plasma look-and-feel packages"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/color-schemes" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/color-schemes" \
+                            "${HOME}/.local/share/color-schemes" \
+                            "Color schemes"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/icons" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/icons" \
+                            "${HOME}/.local/share/icons" \
+                            "Icon themes"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/aurorae/themes" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/aurorae/themes" \
+                            "${HOME}/.local/share/aurorae/themes" \
+                            "Aurorae window decorations"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/wallpapers" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/wallpapers" \
+                            "${HOME}/.local/share/wallpapers" \
+                            "User wallpapers"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/kded6" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/kded6" \
+                            "${HOME}/.local/share/kded6" \
+                            "KDE6 daemon data"
+            fi
+            
+            if [[ -d "${BACKUP_DIR}/local-share/knewstuff3" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/knewstuff3" \
+                            "${HOME}/.local/share/knewstuff3" \
+                            "KNewStuff download registries"
+            fi
         fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/plasma/look-and-feel" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/plasma/look-and-feel" \
-                        "${HOME}/.local/share/plasma/look-and-feel" \
-                        "Plasma look-and-feel packages"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/color-schemes" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/color-schemes" \
-                        "${HOME}/.local/share/color-schemes" \
-                        "Color schemes"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/icons" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/icons" \
-                        "${HOME}/.local/share/icons" \
-                        "Icon themes"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/aurorae/themes" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/aurorae/themes" \
-                        "${HOME}/.local/share/aurorae/themes" \
-                        "Aurorae window decorations"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/wallpapers" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/wallpapers" \
-                        "${HOME}/.local/share/wallpapers" \
-                        "User wallpapers"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/kded6" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/kded6" \
-                        "${HOME}/.local/share/kded6" \
-                        "cKDE6 daemon data"
-        fi
-        
-        if [[ -d "${BACKUP_DIR}/local-share/knewstuff3" ]]; then
-            restore_item "${BACKUP_DIR}/local-share/knewstuff3" \
-                        "${HOME}/.local/share/knewstuff3" \
-                        "KNewStuff download registries"
-        fi
-    fi
     fi
 fi
 
