@@ -10,6 +10,7 @@
 #   ./kde-backup backup [OPTIONS]
 #   ./kde-backup restore BACKUP_DIR [OPTIONS]
 #   ./kde-backup validate BACKUP_DIR
+#   ./kde-backup restore BACKUP_DIR --interactive  # Interactive TUI for selective restore
 ###############################################################################
 
 set -euo pipefail

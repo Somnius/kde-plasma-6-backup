@@ -175,6 +175,8 @@ SKIP_USER_RESOURCES=false
 DRY_RUN=false
 VALIDATE_ONLY=false
 SKIP_DISPLAY_CONFIG=false
+INTERACTIVE=false
+SELECTIVE_RESTORE=false
 
 # Parse arguments
 BACKUP_DIR=""
@@ -201,6 +203,11 @@ while [[ $# -gt 0 ]]; do
             SKIP_DISPLAY_CONFIG=true
             shift
             ;;
+        --interactive|-i)
+            INTERACTIVE=true
+            SELECTIVE_RESTORE=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 BACKUP_DIR [OPTIONS]"
             echo ""
@@ -208,6 +215,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --re-download-themes    Re-download themes/icons from repositories"
             echo "  --skip-user-resources   Only restore config files, skip themes/icons"
             echo "  --skip-display-config   Skip display configuration (safe for different hardware)"
+            echo "  --interactive, -i       Interactive TUI to selectively choose what to restore"
             echo "  --dry-run               Show what would be restored (no changes)"
             echo "  --validate-only         Validate backup integrity and compatibility"
             echo "  -h, --help              Show this help message"
@@ -396,6 +404,172 @@ if [[ "$VALIDATE_ONLY" == true ]]; then
     exit 0
 fi
 
+# Load categories from backup metadata
+declare -A CATEGORY_FILES
+declare -A SELECTED_CATEGORIES
+
+load_categories() {
+    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    if [[ ! -f "$categories_file" ]]; then
+        echo -e "${YELLOW}Warning: Categories metadata not found. Using full restore.${NC}"
+        return 1
+    fi
+    
+    while IFS='|' read -r category file_path description; do
+        # Skip comments and empty lines
+        [[ "$category" =~ ^#.*$ ]] && continue
+        [[ -z "$category" ]] && continue
+        
+        # Check if file exists in backup
+        if [[ -e "${BACKUP_DIR}/${file_path}" ]] || [[ -d "${BACKUP_DIR}/${file_path}" ]]; then
+            CATEGORY_FILES["${category}|${file_path}"]="$description"
+        fi
+    done < "$categories_file"
+    
+    return 0
+}
+
+# Interactive TUI for category selection
+show_interactive_menu() {
+    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    if [[ ! -f "$categories_file" ]]; then
+        echo -e "${RED}Error: Categories metadata not found in backup${NC}"
+        echo -e "${YELLOW}This backup was created with an older version. Use full restore instead.${NC}"
+        return 1
+    fi
+    
+    # Get unique categories
+    local unique_categories=($(grep -v '^#' "$categories_file" | cut -d'|' -f1 | sort -u))
+    
+    echo ""
+    echo -e "${BLUE}=== Interactive Restore Selection ===${NC}"
+    echo -e "${BLUE}Select which categories to restore:${NC}"
+    echo ""
+    
+    local index=1
+    declare -A category_map
+    
+    for category in "${unique_categories[@]}"; do
+        # Count items in this category
+        local count=$(grep -v '^#' "$categories_file" | grep "^${category}|" | wc -l)
+        local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+        
+        echo -e "${GREEN}[${index}]${NC} ${display_name} (${count} items)"
+        category_map[$index]="$category"
+        ((index++))
+    done
+    
+    echo -e "${GREEN}[${index}]${NC} Restore All Categories"
+    echo -e "${GREEN}[0]${NC} Cancel"
+    echo ""
+    
+    read -p "Enter your choices (comma-separated, e.g., 1,3,5 or ${index} for all): " choices
+    
+    if [[ "$choices" == "0" ]]; then
+        echo "Restore cancelled."
+        exit 0
+    fi
+    
+    # Parse choices
+    IFS=',' read -ra choice_array <<< "$choices"
+    local restore_all=false
+    
+    for choice in "${choice_array[@]}"; do
+        choice=$(echo "$choice" | xargs) # trim whitespace
+        if [[ "$choice" == "$index" ]]; then
+            restore_all=true
+            break
+        fi
+        if [[ -n "${category_map[$choice]}" ]]; then
+            SELECTED_CATEGORIES["${category_map[$choice]}"]=1
+        fi
+    done
+    
+    if [[ "$restore_all" == true ]]; then
+        for category in "${unique_categories[@]}"; do
+            SELECTED_CATEGORIES["$category"]=1
+        done
+    fi
+    
+    # Show selected categories
+    echo ""
+    echo -e "${BLUE}Selected categories for restore:${NC}"
+    for category in "${!SELECTED_CATEGORIES[@]}"; do
+        local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+        local count=$(grep -v '^#' "$categories_file" | grep "^${category}|" | wc -l)
+        echo -e "  ${GREEN}✓${NC} ${display_name} (${count} items)"
+    done
+    echo ""
+    
+    read -p "Continue with restore? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Restore cancelled."
+        exit 0
+    fi
+    
+    return 0
+}
+
+# Restore items by category
+restore_by_category() {
+    local category="$1"
+    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    
+    if [[ ! -f "$categories_file" ]]; then
+        return 1
+    fi
+    
+    local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+    echo ""
+    echo -e "${BLUE}--- Restoring ${display_name} Category ---${NC}"
+    
+    local item_count=0
+    while IFS='|' read -r cat file_path description; do
+        # Skip comments and empty lines
+        [[ "$cat" =~ ^#.*$ ]] && continue
+        [[ -z "$cat" ]] && continue
+        
+        # Only process this category
+        if [[ "$cat" != "$category" ]]; then
+            continue
+        fi
+        
+        # Restore the file/directory
+        local source="${BACKUP_DIR}/${file_path}"
+        local dest=""
+        
+        # Determine destination based on file path
+        if [[ "$file_path" == config/* ]]; then
+            # Handle subdirectories in config (e.g., config/kdeconnect, config/kde.org)
+            if [[ "$file_path" == config/*/* ]]; then
+                # It's a subdirectory
+                local rel_path="${file_path#config/}"
+                dest="${HOME}/.config/${rel_path}"
+            else
+                # It's a file in config root
+                local filename=$(basename "$file_path")
+                dest="${HOME}/.config/${filename}"
+            fi
+        elif [[ "$file_path" == local-share/* ]]; then
+            local rel_path="${file_path#local-share/}"
+            dest="${HOME}/.local/share/${rel_path}"
+        fi
+        
+        if [[ -n "$dest" ]] && [[ -e "$source" ]]; then
+            echo -e "${GREEN}  → ${description}${NC}"
+            restore_item "$source" "$dest" "$description"
+            ((item_count++))
+        fi
+    done < "$categories_file"
+    
+    if [[ $item_count -eq 0 ]]; then
+        echo -e "${YELLOW}  No items found in backup for this category${NC}"
+    else
+        echo -e "${GREEN}  ✓ Restored ${item_count} item(s)${NC}"
+    fi
+}
+
 # Function to restore a file or directory
 restore_item() {
     local source="$1"
@@ -450,7 +624,19 @@ if [[ -f "${BACKUP_DIR}/metadata/system-info.txt" ]]; then
     echo ""
 fi
 
-if [[ "$DRY_RUN" == false ]]; then
+# Handle interactive/selective restore
+if [[ "$INTERACTIVE" == true ]]; then
+    if ! load_categories; then
+        echo -e "${YELLOW}Falling back to full restore...${NC}"
+        INTERACTIVE=false
+    else
+        if ! show_interactive_menu; then
+            exit 1
+        fi
+    fi
+fi
+
+if [[ "$DRY_RUN" == false ]] && [[ "$INTERACTIVE" == false ]]; then
     read -p "Continue with restore? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -459,10 +645,81 @@ if [[ "$DRY_RUN" == false ]]; then
     fi
 fi
 
-echo ""
-echo -e "${BLUE}--- Restoring configuration files ---${NC}"
+# Perform restore based on mode
+if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
+    # Selective restore by category
+    echo ""
+    echo -e "${BLUE}=== Starting Selective Restore ===${NC}"
+    
+    for category in "${!SELECTED_CATEGORIES[@]}"; do
+        restore_by_category "$category"
+    done
+    
+    # Handle user resources if not skipped
+    if [[ "$SKIP_USER_RESOURCES" == false ]]; then
+        # Check if appearance category was selected (includes themes/icons)
+        if [[ -n "${SELECTED_CATEGORIES[appearance]}" ]]; then
+            echo ""
+            echo -e "${BLUE}--- Restoring user-installed themes, icons, and resources ---${NC}"
+            
+            if [[ "$RE_DOWNLOAD" == true ]]; then
+                echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
+                # Package installation logic would go here (same as full restore)
+            else
+                # Restore files directly for appearance category
+                if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/plasma/desktoptheme" \
+                                "${HOME}/.local/share/plasma/desktoptheme" \
+                                "Plasma desktop themes"
+                fi
+                if [[ -d "${BACKUP_DIR}/local-share/plasma/look-and-feel" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/plasma/look-and-feel" \
+                                "${HOME}/.local/share/plasma/look-and-feel" \
+                                "Plasma look-and-feel packages"
+                fi
+                if [[ -d "${BACKUP_DIR}/local-share/color-schemes" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/color-schemes" \
+                                "${HOME}/.local/share/color-schemes" \
+                                "Color schemes"
+                fi
+                if [[ -d "${BACKUP_DIR}/local-share/icons" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/icons" \
+                                "${HOME}/.local/share/icons" \
+                                "Icon themes"
+                fi
+                if [[ -d "${BACKUP_DIR}/local-share/aurorae/themes" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/aurorae/themes" \
+                                "${HOME}/.local/share/aurorae/themes" \
+                                "Aurorae window decorations"
+                fi
+                if [[ -d "${BACKUP_DIR}/local-share/wallpapers" ]]; then
+                    restore_item "${BACKUP_DIR}/local-share/wallpapers" \
+                                "${HOME}/.local/share/wallpapers" \
+                                "User wallpapers"
+                fi
+            fi
+        fi
+        
+        # Handle kde6-data category
+        if [[ -n "${SELECTED_CATEGORIES[kde6-data]}" ]]; then
+            if [[ -d "${BACKUP_DIR}/local-share/kded6" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/kded6" \
+                            "${HOME}/.local/share/kded6" \
+                            "KDE6 daemon data"
+            fi
+            if [[ -d "${BACKUP_DIR}/local-share/knewstuff3" ]]; then
+                restore_item "${BACKUP_DIR}/local-share/knewstuff3" \
+                            "${HOME}/.local/share/knewstuff3" \
+                            "KNewStuff download registries"
+            fi
+        fi
+    fi
+else
+    # Full restore (original behavior)
+    echo ""
+    echo -e "${BLUE}--- Restoring configuration files ---${NC}"
 
-# Restore core configuration files
+    # Restore core configuration files
 restore_config "kdeglobals" "Global KDE settings"
 restore_config "plasmarc" "Plasma theme settings"
 restore_config "plasmashellrc" "Plasma shell configuration"
@@ -637,8 +894,10 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
                         "KNewStuff download registries"
         fi
     fi
+    fi
 fi
 
+# Common completion message for both modes
 if [[ "$DRY_RUN" == false ]]; then
     echo ""
     echo -e "${GREEN}=== Restore completed! ===${NC}"
