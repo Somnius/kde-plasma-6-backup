@@ -382,6 +382,8 @@ Restores KDE Plasma 6 settings from a backup.
 - Creates backups of existing files before overwriting
 - Prompts before restoring display configuration
 - Checks Plasma version compatibility
+- Robust error handling: continues restoring other categories even if one fails
+- Detailed progress output showing which categories are being restored
 
 **Examples:**
 ```bash

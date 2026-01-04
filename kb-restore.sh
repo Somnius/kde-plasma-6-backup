@@ -668,7 +668,7 @@ restore_by_category() {
     echo -e "${BLUE}--- Restoring ${display_name} Category ---${NC}"
     
     local item_count=0
-    while IFS='|' read -r cat file_path description; do
+    while IFS='|' read -r cat file_path description || [[ -n "$cat" ]]; do
         # Skip comments and empty lines
         [[ "$cat" =~ ^#.*$ ]] && continue
         [[ -z "$cat" ]] && continue
@@ -701,10 +701,16 @@ restore_by_category() {
         
         if [[ -n "$dest" ]] && [[ -e "$source" ]]; then
             echo -e "${GREEN}  → ${description}${NC}"
-            restore_item "$source" "$dest" "$description"
-            ((item_count++))
+            # Use || true to prevent set -e from exiting on restore_item failure
+            if restore_item "$source" "$dest" "$description" || true; then
+                ((item_count++)) || true
+            else
+                echo -e "${YELLOW}  Warning: Failed to restore ${description}${NC}"
+            fi
+        elif [[ -n "$dest" ]]; then
+            echo -e "${YELLOW}  Skipping (not in backup): ${description}${NC}"
         fi
-    done < "$categories_file"
+    done < "$categories_file" || true
     
     if [[ $item_count -eq 0 ]]; then
         echo -e "${YELLOW}  No items found in backup for this category${NC}"
@@ -793,10 +799,18 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
     # Selective restore by category
     echo ""
     echo -e "${BLUE}=== Starting Selective Restore ===${NC}"
+    echo -e "${BLUE}Will restore ${#SELECTED_CATEGORIES[@]} category/categories${NC}"
     
     for category in "${!SELECTED_CATEGORIES[@]}"; do
-        restore_by_category "$category"
+        # Use || true to prevent set -e from exiting on restore_by_category failure
+        if ! restore_by_category "$category" || true; then
+            echo -e "${YELLOW}Warning: Issues encountered while restoring category: ${category}${NC}"
+            # Continue with next category instead of exiting
+        fi
     done
+    
+    echo ""
+    echo -e "${BLUE}=== Category restore completed ===${NC}"
     
     # Handle user resources if not skipped
     if [[ "$SKIP_USER_RESOURCES" == false ]]; then
