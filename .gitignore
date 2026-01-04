@@ -1,0 +1,18 @@
+# Exclude backup directories
+backup-*/
+
+# Exclude compressed backup archives
+*.tar.gz
+
+# Exclude any other backup files
+*.backup
+*.bak
+
+# Keep only the scripts and documentation
+# Scripts:
+# - kde-plasma-6 (wrapper)
+# - kde-plasma-6-backup.sh
+# - kde-plasma-6-restore.sh
+# - kde-plasma-6-validate.sh
+# - README.md
+
