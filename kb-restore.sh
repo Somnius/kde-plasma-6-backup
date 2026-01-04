@@ -725,6 +725,7 @@ else
     restore_config "plasmashellrc" "Plasma shell configuration"
     restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets (includes panel transparency)"
 restore_config "plasma-localerc" "Regional and language settings"
+restore_config "user-dirs.locale" "User directories locale settings"
 restore_config "plasma-workspace" "Workspace environment"
 restore_config "plasmanotifyrc" "Notification settings"
 
