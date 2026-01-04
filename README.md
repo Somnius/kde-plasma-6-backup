@@ -18,7 +18,7 @@ Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, c
 ---
 
 <a name="important-limitations"></a>
-## ⚠️ Important Limitations <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## ⚠️ Important Limitations <span style="float:right; font-size:0.7em;">[↓ Down to TOC](#table-of-contents)</span>
 
 <div style="border: 2px solid #ff6b6b; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
 
@@ -38,7 +38,7 @@ While the scripts include cross-distribution package manager detection, package 
 ---
 
 <a name="important-use-the-wrapper-script"></a>
-## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↓ Down to TOC](#table-of-contents)</span>
 
 **Always use the `kde-backup` wrapper script for all operations:**
 
