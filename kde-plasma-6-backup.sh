@@ -24,6 +24,78 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Detect package manager
+detect_package_manager() {
+    if command -v pacman >/dev/null 2>&1; then
+        echo "pacman"
+    elif command -v apt >/dev/null 2>&1; then
+        echo "apt"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo "dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        echo "yum"
+    elif command -v zypper >/dev/null 2>&1; then
+        echo "zypper"
+    elif command -v emerge >/dev/null 2>&1; then
+        echo "emerge"
+    else
+        echo "unknown"
+    fi
+}
+
+# Get package list command for package manager
+get_package_list_command() {
+    local pkgmgr="$1"
+    case "$pkgmgr" in
+        pacman)
+            echo "pacman -Q | grep -E '(plasma|kde)' | grep -E '(theme|icon|color|desktop)' | awk '{print \$1}'"
+            ;;
+        apt)
+            echo "dpkg -l | grep -E '(plasma|kde)' | grep -E '(theme|icon|color|desktop)' | awk '{print \$2}'"
+            ;;
+        dnf|yum)
+            echo "rpm -qa | grep -E '(plasma|kde)' | grep -E '(theme|icon|color|desktop)'"
+            ;;
+        zypper)
+            echo "zypper search --installed-only | grep -E '(plasma|kde)' | grep -E '(theme|icon|color|desktop)' | awk '{print \$3}'"
+            ;;
+        emerge)
+            echo "qlist -I | grep -E '(plasma|kde)' | grep -E '(theme|icon|color|desktop)' | sed 's/.*\\///'"
+            ;;
+        *)
+            echo "unknown"
+            ;;
+    esac
+}
+
+# Get install command hint for package manager
+get_install_hint() {
+    local pkgmgr="$1"
+    case "$pkgmgr" in
+        pacman)
+            echo "sudo pacman -S"
+            ;;
+        apt)
+            echo "sudo apt install"
+            ;;
+        dnf)
+            echo "sudo dnf install"
+            ;;
+        yum)
+            echo "sudo yum install"
+            ;;
+        zypper)
+            echo "sudo zypper install"
+            ;;
+        emerge)
+            echo "sudo emerge"
+            ;;
+        *)
+            echo "your package manager"
+            ;;
+    esac
+}
+
 # Default values
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_BASE_DIR="${SCRIPT_DIR}"
@@ -249,16 +321,30 @@ if [[ "$INCLUDE_PACKAGES" == true ]]; then
     echo ""
     echo -e "${BLUE}--- Creating package list ---${NC}"
     
+    # Detect package manager
+    PKG_MGR=$(detect_package_manager)
+    INSTALL_HINT=$(get_install_hint "$PKG_MGR")
+    LIST_CMD=$(get_package_list_command "$PKG_MGR")
+    
     # List installed KDE/Plasma theme/icon packages
     {
         echo "# KDE Plasma theme and icon packages"
-        echo "# Install with: sudo apt install \$(grep -v '^#' kde-packages.txt)"
+        echo "# Package manager: ${PKG_MGR}"
+        echo "# Install with: ${INSTALL_HINT} \$(grep -v '^#' kde-packages.txt)"
+        echo "# Note: Package names may differ between distributions"
         echo ""
-        dpkg -l | grep -E "(plasma|kde)" | grep -E "(theme|icon|color|desktop)" | \
-            awk '{print $2}' | sort -u
+        if [[ "$PKG_MGR" != "unknown" ]]; then
+            eval "$LIST_CMD" | sort -u
+        else
+            echo "# Could not detect package manager - package list not generated"
+        fi
     } > "${BACKUP_DIR}/metadata/kde-packages.txt" 2>/dev/null || true
     
-    echo -e "${GREEN}Package list saved to metadata/kde-packages.txt${NC}"
+    if [[ "$PKG_MGR" != "unknown" ]]; then
+        echo -e "${GREEN}Package list saved to metadata/kde-packages.txt (${PKG_MGR})${NC}"
+    else
+        echo -e "${YELLOW}Warning: Could not detect package manager - package list not generated${NC}"
+    fi
 fi
 
 # Create a manifest of all backed up items

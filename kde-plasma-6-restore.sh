@@ -20,6 +20,67 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Detect package manager
+detect_package_manager() {
+    if command -v pacman >/dev/null 2>&1; then
+        echo "pacman"
+    elif command -v apt >/dev/null 2>&1; then
+        echo "apt"
+    elif command -v dnf >/dev/null 2>&1; then
+        echo "dnf"
+    elif command -v yum >/dev/null 2>&1; then
+        echo "yum"
+    elif command -v zypper >/dev/null 2>&1; then
+        echo "zypper"
+    elif command -v emerge >/dev/null 2>&1; then
+        echo "emerge"
+    else
+        echo "unknown"
+    fi
+}
+
+# Get install command for package manager
+get_install_command() {
+    local pkgmgr="$1"
+    case "$pkgmgr" in
+        pacman)
+            echo "sudo pacman -S --noconfirm"
+            ;;
+        apt)
+            echo "sudo apt install -y"
+            ;;
+        dnf)
+            echo "sudo dnf install -y"
+            ;;
+        yum)
+            echo "sudo yum install -y"
+            ;;
+        zypper)
+            echo "sudo zypper install -y"
+            ;;
+        emerge)
+            echo "sudo emerge -a"
+            ;;
+        *)
+            echo "unknown"
+            ;;
+    esac
+}
+
+# Get package manager name for display
+get_package_manager_name() {
+    local pkgmgr="$1"
+    case "$pkgmgr" in
+        pacman) echo "pacman (Arch Linux)" ;;
+        apt) echo "apt (Debian/Ubuntu)" ;;
+        dnf) echo "dnf (Fedora)" ;;
+        yum) echo "yum (RHEL/CentOS)" ;;
+        zypper) echo "zypper (openSUSE)" ;;
+        emerge) echo "emerge (Gentoo)" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
 # Default values
 RE_DOWNLOAD=false
 SKIP_USER_RESOURCES=false
@@ -388,6 +449,18 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
     if [[ "$RE_DOWNLOAD" == true ]]; then
         echo -e "${YELLOW}Re-download mode: Installing packages from repository${NC}"
         
+        # Detect package manager
+        PKG_MGR=$(detect_package_manager)
+        PKG_MGR_NAME=$(get_package_manager_name "$PKG_MGR")
+        INSTALL_CMD=$(get_install_command "$PKG_MGR")
+        
+        if [[ "$PKG_MGR" == "unknown" ]]; then
+            echo -e "${RED}Error: Could not detect package manager${NC}"
+            echo -e "${YELLOW}Please install packages manually from the backup's kde-packages.txt${NC}"
+        else
+            echo -e "${BLUE}Detected package manager: ${PKG_MGR_NAME}${NC}"
+        fi
+        
         # Install packages from package list if available
         if [[ -f "${BACKUP_DIR}/metadata/kde-packages.txt" ]]; then
             echo -e "${BLUE}Installing packages from backup list...${NC}"
@@ -395,16 +468,24 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
                 PACKAGES=$(grep -v '^#' "${BACKUP_DIR}/metadata/kde-packages.txt" | grep -v '^$' | tr '\n' ' ')
                 if [[ -n "$PACKAGES" ]]; then
                     echo -e "${YELLOW}Packages to install: ${PACKAGES}${NC}"
+                    echo -e "${YELLOW}Note: Package names may differ between distributions${NC}"
+                    echo -e "${YELLOW}Some packages may not be available or have different names${NC}"
                     read -p "Install these packages? (y/n): " -n 1 -r
                     echo
                     if [[ $REPLY =~ ^[Yy]$ ]]; then
-                        sudo apt install -y $PACKAGES || {
-                            echo -e "${YELLOW}Warning: Some packages could not be installed${NC}"
-                        }
+                        if [[ "$PKG_MGR" != "unknown" ]]; then
+                            $INSTALL_CMD $PACKAGES || {
+                                echo -e "${YELLOW}Warning: Some packages could not be installed${NC}"
+                                echo -e "${YELLOW}This is normal if package names differ between distributions${NC}"
+                                echo -e "${YELLOW}You may need to install packages manually or use Discover${NC}"
+                            }
+                        else
+                            echo -e "${RED}Cannot install packages: unknown package manager${NC}"
+                        fi
                     fi
                 fi
             else
-                echo -e "${BLUE}[DRY RUN] Would install packages from kde-packages.txt${NC}"
+                echo -e "${BLUE}[DRY RUN] Would install packages from kde-packages.txt using ${PKG_MGR_NAME}${NC}"
             fi
         else
             echo -e "${YELLOW}No package list found in backup${NC}"
@@ -412,7 +493,11 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
         
         # Extract theme/icon names from config and try to install them
         echo -e "${BLUE}Note: You may need to install themes/icons manually from Discover or:${NC}"
-        echo -e "${BLUE}  sudo apt install <package-name>${NC}"
+        if [[ "$PKG_MGR" != "unknown" ]]; then
+            echo -e "${BLUE}  ${INSTALL_CMD} <package-name>${NC}"
+        else
+            echo -e "${BLUE}  Use your distribution's package manager${NC}"
+        fi
         
     else
         # Restore files directly
