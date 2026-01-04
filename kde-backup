@@ -85,6 +85,85 @@ check_version() {
     fi
 }
 
+# Manually update from git
+update_from_git() {
+    # Check if we're in a git repository
+    if [[ ! -d "${SCRIPT_DIR}/.git" ]]; then
+        echo -e "${RED}Error: Not in a git repository${NC}" >&2
+        echo "This script must be in a git repository to update." >&2
+        exit 1
+    fi
+    
+    # Get current branch
+    current_branch=$(git -C "${SCRIPT_DIR}" branch --show-current 2>/dev/null || echo "")
+    if [[ -z "$current_branch" ]]; then
+        echo -e "${RED}Error: Could not determine current branch${NC}" >&2
+        exit 1
+    fi
+    
+    # Check if remote exists
+    remote=$(git -C "${SCRIPT_DIR}" remote get-url origin 2>/dev/null || echo "")
+    if [[ -z "$remote" ]]; then
+        echo -e "${RED}Error: No remote repository configured${NC}" >&2
+        echo "Configure a remote with: git remote add origin <url>" >&2
+        exit 1
+    fi
+    
+    echo -e "${BLUE}Fetching latest changes from ${remote}...${NC}"
+    
+    # Fetch latest
+    if ! git -C "${SCRIPT_DIR}" fetch origin "$current_branch" 2>&1; then
+        echo -e "${RED}Error: Failed to fetch from remote${NC}" >&2
+        exit 1
+    fi
+    
+    # Check if there are updates
+    local_commit=$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || echo "")
+    remote_commit=$(git -C "${SCRIPT_DIR}" rev-parse "origin/${current_branch}" 2>/dev/null || echo "")
+    
+    if [[ -z "$local_commit" ]] || [[ -z "$remote_commit" ]]; then
+        echo -e "${YELLOW}Warning: Could not compare commits${NC}" >&2
+        exit 1
+    fi
+    
+    if [[ "$local_commit" == "$remote_commit" ]]; then
+        echo -e "${GREEN}✓ Already up to date${NC}"
+        echo -e "${BLUE}Current version: $(git -C "${SCRIPT_DIR}" log -1 --oneline 2>/dev/null)${NC}"
+        exit 0
+    fi
+    
+    # Check if local is behind
+    if git -C "${SCRIPT_DIR}" merge-base --is-ancestor "$local_commit" "$remote_commit" 2>/dev/null; then
+        echo -e "${YELLOW}Local is behind remote${NC}"
+        echo -e "${BLUE}Current: $(git -C "${SCRIPT_DIR}" log -1 --oneline 2>/dev/null | cut -d' ' -f1)${NC}"
+        echo -e "${BLUE}Latest:  $(git -C "${SCRIPT_DIR}" log -1 --oneline "origin/${current_branch}" 2>/dev/null | cut -d' ' -f1)${NC}"
+        echo ""
+        read -p "Pull latest changes? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${BLUE}Pulling latest changes...${NC}"
+            if git -C "${SCRIPT_DIR}" pull origin "$current_branch" 2>&1; then
+                echo -e "${GREEN}✓ Updated successfully${NC}"
+                echo -e "${BLUE}New version: $(git -C "${SCRIPT_DIR}" log -1 --oneline 2>/dev/null)${NC}"
+                exit 0
+            else
+                echo -e "${RED}✗ Update failed${NC}" >&2
+                exit 1
+            fi
+        else
+            echo "Update cancelled."
+            exit 0
+        fi
+    else
+        echo -e "${YELLOW}Warning: Local branch has diverged from remote${NC}"
+        echo -e "${YELLOW}Current: $(git -C "${SCRIPT_DIR}" log -1 --oneline 2>/dev/null | cut -d' ' -f1)${NC}"
+        echo -e "${YELLOW}Remote:  $(git -C "${SCRIPT_DIR}" log -1 --oneline "origin/${current_branch}" 2>/dev/null | cut -d' ' -f1)${NC}"
+        echo ""
+        echo "You may need to merge or rebase manually."
+        exit 1
+    fi
+}
+
 # Show usage
 show_usage() {
     echo "KDE Plasma 6 Backup and Restore Tool"
