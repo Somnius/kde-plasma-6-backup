@@ -39,6 +39,7 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 
 ## Table of Contents
 
+- [Important Limitations](#-important-limitations)
 - [Important: Use the Wrapper Script](#-important-use-the-wrapper-script)
 - [Quick Start](#quick-start)
 - [Cross-Distribution Support](#cross-distribution-support)
