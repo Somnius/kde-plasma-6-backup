@@ -1161,18 +1161,18 @@ else
     echo -e "${BLUE}--- Restoring configuration files ---${NC}"
 
     # Restore core configuration files
-    restore_config "kdeglobals" "Global KDE settings"
-    restore_config "plasmarc" "Plasma theme and wallpaper settings"
-    restore_config "plasmashellrc" "Plasma shell configuration"
-    restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets (includes panel transparency)"
-    restore_config "plasma-localerc" "Regional and language settings"
-    restore_config "user-dirs.locale" "User directories locale settings"
-    restore_config "plasma-workspace" "Workspace environment"
-    restore_config "plasmanotifyrc" "Notification settings"
+    restore_config "kdeglobals" "Global KDE settings" || true
+    restore_config "plasmarc" "Plasma theme and wallpaper settings" || true
+    restore_config "plasmashellrc" "Plasma shell configuration" || true
+    restore_config "plasma-org.kde.plasma.desktop-appletsrc" "Panel and desktop applets (includes panel transparency)" || true
+    restore_config "plasma-localerc" "Regional and language settings" || true
+    restore_config "user-dirs.locale" "User directories locale settings" || true
+    restore_config "plasma-workspace" "Workspace environment" || true
+    restore_config "plasmanotifyrc" "Notification settings" || true
 
     # Restore window manager settings
-    restore_config "kwinrc" "Window manager settings"
-    restore_config "kwinrulesrc" "Window rules"
+    restore_config "kwinrc" "Window manager settings" || true
+    restore_config "kwinrulesrc" "Window rules" || true
 
     # Display configuration is hardware-specific - skip if requested or on different hardware
     if [[ "$SKIP_DISPLAY_CONFIG" == false ]]; then
@@ -1183,12 +1183,12 @@ else
                 read -p "  Continue with display config restore? (y/n): " -n 1 -r
                 echo
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    restore_config "kwinoutputconfig.json" "Display configuration"
+                    restore_config "kwinoutputconfig.json" "Display configuration" || true
                 else
                     echo -e "${YELLOW}Skipping display configuration${NC}"
                 fi
             else
-                restore_config "kwinoutputconfig.json" "Display configuration"
+                restore_config "kwinoutputconfig.json" "Display configuration" || true
             fi
         fi
     else
