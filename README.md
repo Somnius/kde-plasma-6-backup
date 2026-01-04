@@ -6,7 +6,7 @@ Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, c
 
 ---
 
-## ⚠️ Important Limitations
+## ⚠️ Important Limitations <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 <div style="border: 2px solid #ff6b6b; background-color: #fff5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
 
