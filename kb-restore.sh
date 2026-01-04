@@ -583,12 +583,24 @@ show_interactive_menu() {
     
     for choice in "${choice_array[@]}"; do
         choice=$(echo "$choice" | xargs) # trim whitespace
-        if [[ "$choice" == "$index" ]]; then
+        
+        # Handle "all" keyword or the "Restore All" index
+        if [[ "$choice" == "all" ]] || [[ "$choice" == "All" ]] || [[ "$choice" == "ALL" ]] || [[ "$choice" == "$index" ]]; then
             restore_all=true
             break
         fi
-        if [[ -n "${category_map[$choice]}" ]]; then
+        
+        # Skip if not a number
+        if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
+            echo -e "${YELLOW}Warning: Invalid choice '${choice}', skipping...${NC}"
+            continue
+        fi
+        
+        # Check if choice is valid and exists in category_map
+        if [[ -n "${category_map[$choice]:-}" ]]; then
             SELECTED_CATEGORIES["${category_map[$choice]}"]=1
+        else
+            echo -e "${YELLOW}Warning: Invalid category number '${choice}', skipping...${NC}"
         fi
     done
     
