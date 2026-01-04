@@ -25,6 +25,66 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Check if running latest version from git
+check_version() {
+    # Only check if we're in a git repository
+    if [[ ! -d "${SCRIPT_DIR}/.git" ]]; then
+        return 0
+    fi
+    
+    # Get current branch
+    local current_branch=$(git -C "${SCRIPT_DIR}" branch --show-current 2>/dev/null || echo "")
+    if [[ -z "$current_branch" ]]; then
+        return 0
+    fi
+    
+    # Check if remote exists
+    local remote=$(git -C "${SCRIPT_DIR}" remote get-url origin 2>/dev/null || echo "")
+    if [[ -z "$remote" ]]; then
+        return 0
+    fi
+    
+    # Fetch latest (non-blocking, in background)
+    git -C "${SCRIPT_DIR}" fetch origin "$current_branch" >/dev/null 2>&1 &
+    
+    # Check if local is behind remote
+    local local_commit=$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || echo "")
+    local remote_commit=$(git -C "${SCRIPT_DIR}" rev-parse "origin/${current_branch}" 2>/dev/null || echo "")
+    
+    if [[ -z "$local_commit" ]] || [[ -z "$remote_commit" ]]; then
+        return 0
+    fi
+    
+    if [[ "$local_commit" != "$remote_commit" ]]; then
+        # Check if local is behind
+        if git -C "${SCRIPT_DIR}" merge-base --is-ancestor "$local_commit" "$remote_commit" 2>/dev/null; then
+            echo ""
+            echo -e "${YELLOW}⚠ A newer version is available on ${current_branch} branch${NC}"
+            echo -e "${YELLOW}  Current: $(git -C "${SCRIPT_DIR}" log -1 --oneline 2>/dev/null | cut -d' ' -f1)${NC}"
+            echo -e "${YELLOW}  Latest:  $(git -C "${SCRIPT_DIR}" log -1 --oneline "origin/${current_branch}" 2>/dev/null | cut -d' ' -f1)${NC}"
+            echo ""
+            read -p "Update to latest version now? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "${BLUE}Updating...${NC}"
+                if git -C "${SCRIPT_DIR}" pull origin "$current_branch" >/dev/null 2>&1; then
+                    echo -e "${GREEN}✓ Updated successfully${NC}"
+                    echo -e "${YELLOW}Re-running command with latest version...${NC}"
+                    echo ""
+                    # Re-execute the script with same arguments
+                    exec "$0" "$@"
+                else
+                    echo -e "${RED}✗ Update failed. Continuing with current version.${NC}"
+                    echo ""
+                fi
+            else
+                echo -e "${YELLOW}Continuing with current version...${NC}"
+                echo ""
+            fi
+        fi
+    fi
+}
+
 # Show usage
 show_usage() {
     echo "KDE Plasma 6 Backup and Restore Tool"
@@ -56,7 +116,12 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
+# Check for version updates (skip for help command)
 COMMAND="$1"
+if [[ "$COMMAND" != "help" ]] && [[ "$COMMAND" != "--help" ]] && [[ "$COMMAND" != "-h" ]]; then
+    check_version "$@"
+fi
+
 shift
 
 # Route to appropriate script

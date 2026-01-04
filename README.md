@@ -326,6 +326,15 @@ The main entry point for all backup/restore operations. This wrapper delegates t
 ./kde-backup restore --help
 ```
 
+**Automatic Version Check:**
+The wrapper script automatically checks if you're running the latest version from the git repository. If a newer version is available on your current branch, it will:
+- Display a warning with current and latest commit hashes
+- Prompt you to update: "Update to latest version now? (y/n)"
+- If you choose 'y', it will pull the latest changes and re-run your command
+- If you choose 'n', it continues with the current version
+
+This feature only works when the script is in a git repository with a remote configured. It checks the current branch against the remote branch.
+
 **Note:** The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details. Use the wrapper for all operations.
 
 ---
