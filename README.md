@@ -126,9 +126,12 @@ Version 1.2-beta introduces interactive restore mode, allowing you to selectivel
    - Skip display configuration (safe for different hardware)
    - Re-download themes/icons from repositories (instead of restoring files)
 3. **Stage 3 - Restore:** Selected categories are restored
-4. **Stage 4 - Missing Applications:** After restore, the script detects and offers to install missing:
-   - Autostart applications (e.g., yakuake from Flatpak)
-   - Default applications (from mimeapps.list)
+4. **Stage 4 - Post-Restore Steps:** After restore completes:
+   - KWin reconfiguration (if window-manager category was selected)
+   - Missing application detection (autostart and default apps)
+   - Prompts to install missing applications
+   - Instructions for applying settings (logout/login, restart Plasma, reboot)
+   - Option to restart Plasma shell immediately
 
 **Available Categories:**
 - **Appearance** - Themes, colors, icons, fonts, wallpapers, window decorations
@@ -159,10 +162,24 @@ Version 1.2-beta introduces interactive restore mode, allowing you to selectivel
 ```
 
 **Interactive Features:**
-- **Multi-stage prompts:** Category selection → Restore options → Missing app detection
+- **Multi-stage prompts:** Category selection → Restore options → Missing app detection → Post-restore steps
 - **Smart app detection:** Automatically detects missing autostart and default applications
 - **Flatpak support:** Detects and offers to install Flatpak applications (e.g., yakuake)
 - **Installation prompts:** After restore, offers to install missing applications with appropriate package manager hints
+- **Post-restore actions:** KWin reconfiguration, Plasma shell restart option, and helpful instructions
+
+**Dry-Run Mode with Interactive:**
+You can combine `--dry-run` with `--interactive` to test the full restore process without making changes:
+```bash
+./kde-backup restore backup-YYYYMMDD-HHMMSS --interactive --dry-run
+```
+
+This will:
+- Go through all interactive stages (category selection, restore options)
+- Show what would be restored (with `[DRY RUN]` prefix)
+- Detect and list missing applications (without prompting to install)
+- Show all post-restore steps that would occur
+- Perfect for testing the restore process on a target system before actually restoring
 
 **Note:** Interactive mode requires a backup created with version 1.2-beta or later (includes `metadata/categories.txt`). Older backups will fall back to full restore.
 
@@ -354,6 +371,9 @@ Restores KDE Plasma 6 settings from a backup.
 - `--skip-display-config` - Skip display configuration (safe for different hardware)
   - Can also be selected during interactive mode
 - `--dry-run` - Show what would be restored without making changes
+  - Works with `--interactive` to test the full restore flow
+  - Shows all steps including missing app detection and post-restore actions
+  - No files are modified, no applications are installed
 - `--validate-only` - Validate backup without restoring
 
 **Safety Features:**
@@ -449,6 +469,7 @@ cd ~/kde-plasma-6-backup
 
 ### Step 3: Dry-Run Restore (Preview Only)
 
+**Standard Dry-Run:**
 This shows what would be restored **without making any changes**:
 
 ```bash
@@ -461,6 +482,22 @@ This shows what would be restored **without making any changes**:
 - No actual files are modified
 
 **Expected:** Should show all your config files and resources that would be restored.
+
+**Interactive Dry-Run (Recommended for Testing):**
+For a complete test of the interactive restore workflow:
+
+```bash
+./kde-backup restore backup-20250104-120000 --interactive --dry-run
+```
+
+This will:
+- Go through all interactive stages (category selection, restore options)
+- Show what would be restored for each selected category (with `[DRY RUN]` prefix)
+- Detect and list missing applications (without prompting to install)
+- Show all post-restore steps that would occur
+- Perfect for testing the restore process on a target system before actually restoring
+
+**Expected:** You'll see the full interactive workflow, all restore operations marked as `[DRY RUN]`, missing app detection, and post-restore instructions - all without making any changes.
 
 ### Step 4: Validate-Only Mode
 

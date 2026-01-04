@@ -859,36 +859,45 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
     fi
     
     # Interactive restore completion - same as full restore
-    if [[ "$DRY_RUN" == false ]]; then
-        echo ""
+    echo ""
+    if [[ "$DRY_RUN" == true ]]; then
+        echo -e "${BLUE}[DRY RUN] === Restore simulation completed! ===${NC}"
+    else
         echo -e "${GREEN}=== Restore completed! ===${NC}"
-        
-        # Reconfigure KWin if window manager settings were restored
-        if [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
+    fi
+    
+    # Reconfigure KWin if window manager settings were restored
+    if [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            echo -e "${BLUE}[DRY RUN] Would reconfigure KWin to apply window decorations${NC}"
+        else
             reconfigure_kwin
         fi
-        
-        # Check for missing autostart applications
+    fi
+    
+    # Check for missing autostart applications
+    echo ""
+    echo -e "${BLUE}--- Checking for missing applications ---${NC}"
+    
+    local missing_autostart=$(detect_missing_autostart_apps)
+    if [[ -n "$missing_autostart" ]]; then
         echo ""
-        echo -e "${BLUE}--- Checking for missing applications ---${NC}"
+        echo -e "${YELLOW}Missing autostart applications detected:${NC}"
+        local autostart_count=0
+        declare -a autostart_apps
+        while IFS='|' read -r app_name desktop_file; do
+            echo -e "  ${YELLOW}•${NC} ${app_name}"
+            autostart_apps+=("$app_name|$desktop_file")
+            ((autostart_count++))
+        done <<< "$missing_autostart"
         
-        local missing_autostart=$(detect_missing_autostart_apps)
-        if [[ -n "$missing_autostart" ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            echo -e "${BLUE}[DRY RUN] Would prompt to install these missing autostart applications${NC}"
+        else
             echo ""
-            echo -e "${YELLOW}Missing autostart applications detected:${NC}"
-            local autostart_count=0
-            declare -a autostart_apps
-            while IFS='|' read -r app_name desktop_file; do
-                echo -e "  ${YELLOW}•${NC} ${app_name}"
-                autostart_apps+=("$app_name|$desktop_file")
-                ((autostart_count++))
-            done <<< "$missing_autostart"
-            
-            if [[ "$DRY_RUN" == false ]]; then
-                echo ""
-                read -p "Would you like to install these missing autostart applications? (y/n): " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
+            read -p "Would you like to install these missing autostart applications? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
                     for app_entry in "${autostart_apps[@]}"; do
                         IFS='|' read -r app_name desktop_file <<< "$app_entry"
                         echo -e "${BLUE}Attempting to install: ${app_name}${NC}"
@@ -982,16 +991,29 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
             fi
         fi
         
-        if [[ -z "$missing_autostart" ]] && [[ -z "$missing_defaults" ]]; then
-            echo -e "${GREEN}✓ All applications are available${NC}"
-        fi
-        
-        echo ""
+    if [[ -z "$missing_autostart" ]] && [[ -z "$missing_defaults" ]]; then
+        echo -e "${GREEN}✓ All applications are available${NC}"
+    fi
+    
+    echo ""
+    if [[ "$DRY_RUN" == true ]]; then
+        echo -e "${BLUE}[DRY RUN] Would show next steps and offer to restart Plasma shell${NC}"
+    else
         echo -e "${YELLOW}You may need to:${NC}"
         echo -e "${YELLOW}  1. Log out and log back in for some settings to take effect (recommended)${NC}"
         echo -e "${YELLOW}  2. Restart Plasma: killall plasmashell && kstart plasmashell${NC}"
         echo -e "${YELLOW}  3. Or simply reboot your system${NC}"
         echo ""
+        # Offer to restart Plasma
+        read -p "Restart Plasma shell now? (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            killall plasmashell 2>/dev/null || true
+            sleep 1
+            kstart plasmashell 2>/dev/null || {
+                echo -e "${YELLOW}Could not restart plasmashell automatically. Please log out and back in.${NC}"
+            }
+        fi
     fi
 else
     # Full restore (original behavior)
