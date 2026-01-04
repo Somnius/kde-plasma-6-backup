@@ -4,7 +4,7 @@ Complete guide for backing up and restoring all KDE Plasma 6 settings, themes, c
 
 **License:** [MIT](LICENSE)
 
-## ⚠️ Important: Use the Wrapper Script
+## ⚠️ Important: Use the Wrapper Script <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 **Always use the `kde-plasma-6` wrapper script for all operations:**
 
@@ -18,6 +18,7 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 
 ## Table of Contents
 
+- [Important: Use the Wrapper Script](#-important-use-the-wrapper-script)
 - [Quick Start](#quick-start)
 - [Cross-Distribution Support](#cross-distribution-support)
 - [Safety and Precautions](#safety-and-precautions)
@@ -70,7 +71,7 @@ Checks backup integrity and compatibility before restoring.
 
 **Note:** The `kde-plasma-6` wrapper script is the recommended interface. Individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details and should be accessed through the wrapper.
 
-### Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
+## Cross-Distribution Support <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 The scripts automatically detect and support multiple Linux distributions and their package managers:
 
@@ -478,7 +479,7 @@ You're ready to use the backup for real restoration when needed!
 
 ---
 
-## What Gets Backed Up
+## What Gets Backed Up <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ✅ Fully Backed Up and Recoverable
 
@@ -516,7 +517,7 @@ You're ready to use the backup for real restoration when needed!
 
 ---
 
-## What Cannot Be Recovered
+## What Cannot Be Recovered <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ❌ Not Backed Up (System-Wide Settings)
 
@@ -586,7 +587,7 @@ To ensure complete restoration:
 
 ---
 
-## Configuration Locations Reference
+## Configuration Locations Reference <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Configuration Files (`~/.config/`)
 
@@ -672,7 +673,7 @@ System-wide themes, icons, and resources are installed in `/usr/share/`:
 
 ---
 
-## Quick Reference Commands
+## Quick Reference Commands <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### View Current Settings
 
@@ -738,7 +739,7 @@ qdbus org.kde.KWin /KWin reconfigure
 
 ---
 
-## Troubleshooting
+## Troubleshooting <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Settings Not Applied After Restore
 
@@ -808,7 +809,7 @@ If validation reports errors:
 
 ---
 
-## Manual Backup/Restore
+## Manual Backup/Restore <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 If you prefer to manually backup specific settings:
 
@@ -852,7 +853,7 @@ cp -r ~/backup/icons ~/.local/share/
 
 ---
 
-## Backup Structure
+## Backup Structure <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 A backup directory contains:
 
@@ -878,7 +879,7 @@ backup-YYYYMMDD-HHMMSS/
 
 ---
 
-## Tips and Best Practices
+## Tips and Best Practices <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 1. **Regular Backups:** Create backups after making significant changes to your setup
 2. **Test Restores:** Test restoring on a test system or VM before you need it
@@ -890,13 +891,13 @@ backup-YYYYMMDD-HHMMSS/
 
 ---
 
-## References
+## References <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 - [KDE UserBase - Configuration Files](https://userbase.kde.org/KDE_System_Administration/Configuration_Files)
 - [Plasma Desktop Configuration](https://develop.kde.org/docs/plasma/configuration/)
 
 ---
 
-## License
+## License <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
