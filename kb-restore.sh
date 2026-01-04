@@ -1196,40 +1196,40 @@ else
     fi
 
     # Restore keyboard and input
-    restore_config "kglobalshortcutsrc" "Global keyboard shortcuts"
-    restore_config "kxkbrc" "Keyboard layout settings"
-    restore_config "kcminputrc" "Input device settings"
+    restore_config "kglobalshortcutsrc" "Global keyboard shortcuts" || true
+    restore_config "kxkbrc" "Keyboard layout settings" || true
+    restore_config "kcminputrc" "Input device settings" || true
 
     # Restore KDE services
-    restore_config "kded6rc" "KDE daemon configuration"
-    restore_config "kded5rc" "KDE daemon configuration (legacy)"
+    restore_config "kded6rc" "KDE daemon configuration" || true
+    restore_config "kded5rc" "KDE daemon configuration (legacy)" || true
 
     # Restore activity manager
-    restore_config "kactivitymanagerdrc" "Activity manager settings"
-    restore_config "kactivitymanagerd-statsrc" "Activity manager statistics"
+    restore_config "kactivitymanagerdrc" "Activity manager settings" || true
+    restore_config "kactivitymanagerd-statsrc" "Activity manager statistics" || true
 
     # Restore desktop portal
-    restore_config "xdg-desktop-portal-kderc" "Desktop portal settings"
+    restore_config "xdg-desktop-portal-kderc" "Desktop portal settings" || true
 
     # Restore other config directories
     if [[ -d "${BACKUP_DIR}/config/kdeconnect" ]]; then
-        restore_item "${BACKUP_DIR}/config/kdeconnect" "${HOME}/.config/kdeconnect" "KDE Connect"
+        restore_item "${BACKUP_DIR}/config/kdeconnect" "${HOME}/.config/kdeconnect" "KDE Connect" || true
     fi
 
     if [[ -d "${BACKUP_DIR}/config/kdedefaults" ]]; then
-        restore_item "${BACKUP_DIR}/config/kdedefaults" "${HOME}/.config/kdedefaults" "KDE defaults"
+        restore_item "${BACKUP_DIR}/config/kdedefaults" "${HOME}/.config/kdedefaults" "KDE defaults" || true
     fi
 
     if [[ -d "${BACKUP_DIR}/config/kde.org" ]]; then
-        restore_item "${BACKUP_DIR}/config/kde.org" "${HOME}/.config/kde.org" "KDE application settings"
+        restore_item "${BACKUP_DIR}/config/kde.org" "${HOME}/.config/kde.org" "KDE application settings" || true
     fi
 
     if [[ -d "${BACKUP_DIR}/config/autostart" ]]; then
-        restore_item "${BACKUP_DIR}/config/autostart" "${HOME}/.config/autostart" "Autostart applications"
+        restore_item "${BACKUP_DIR}/config/autostart" "${HOME}/.config/autostart" "Autostart applications" || true
     fi
 
     # Restore default applications
-    restore_config "mimeapps.list" "Default applications for file types"
+    restore_config "mimeapps.list" "Default applications for file types" || true
 
     # Restore user-installed resources
     debug "Checking SKIP_USER_RESOURCES: $SKIP_USER_RESOURCES"
@@ -1300,49 +1300,49 @@ else
             if [[ -d "${BACKUP_DIR}/local-share/plasma/desktoptheme" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/plasma/desktoptheme" \
                             "${HOME}/.local/share/plasma/desktoptheme" \
-                            "Plasma desktop themes"
+                            "Plasma desktop themes" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/plasma/look-and-feel" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/plasma/look-and-feel" \
                             "${HOME}/.local/share/plasma/look-and-feel" \
-                            "Plasma look-and-feel packages"
+                            "Plasma look-and-feel packages" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/color-schemes" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/color-schemes" \
                             "${HOME}/.local/share/color-schemes" \
-                            "Color schemes"
+                            "Color schemes" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/icons" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/icons" \
                             "${HOME}/.local/share/icons" \
-                            "Icon themes"
+                            "Icon themes" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/aurorae/themes" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/aurorae/themes" \
                             "${HOME}/.local/share/aurorae/themes" \
-                            "Aurorae window decorations"
+                            "Aurorae window decorations" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/wallpapers" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/wallpapers" \
                             "${HOME}/.local/share/wallpapers" \
-                            "User wallpapers"
+                            "User wallpapers" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/kded6" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/kded6" \
                             "${HOME}/.local/share/kded6" \
-                            "KDE6 daemon data"
+                            "KDE6 daemon data" || true
             fi
             
             if [[ -d "${BACKUP_DIR}/local-share/knewstuff3" ]]; then
                 restore_item "${BACKUP_DIR}/local-share/knewstuff3" \
                             "${HOME}/.local/share/knewstuff3" \
-                            "KNewStuff download registries"
+                            "KNewStuff download registries" || true
             fi
             debug "Completed direct file restore"
         fi
