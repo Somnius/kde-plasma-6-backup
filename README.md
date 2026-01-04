@@ -50,6 +50,8 @@ While the scripts include cross-distribution package manager detection, package 
 
 The individual scripts (`kb-backup.sh`, `kb-restore.sh`, `kb-validate.sh`) are internal implementation details and should be accessed through the wrapper only.
 
+**Version Check:** The wrapper automatically checks if you're running the latest version from git and offers to update if a newer version is available. This helps ensure you're using the most recent fixes and features.
+
 ## Table of Contents
 
 - [Important Limitations](#important-limitations)
