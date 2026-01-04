@@ -515,6 +515,61 @@ detect_missing_default_apps() {
     printf '%s\n' "${missing_apps[@]}"
 }
 
+# Reconfigure KWin to apply window decorations and settings
+reconfigure_kwin() {
+    if command -v qdbus >/dev/null 2>&1; then
+        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+        qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
+            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+        }
+    elif command -v qdbus-qt6 >/dev/null 2>&1; then
+        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
+        qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
+            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
+        }
+    fi
+}
+
+# Function to restore a file or directory
+restore_item() {
+    local source="$1"
+    local dest="$2"
+    local description="$3"
+    
+    if [[ ! -e "$source" ]]; then
+        echo -e "${YELLOW}Skipping (not in backup): ${description}${NC}"
+        return 1
+    fi
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        echo -e "${BLUE}[DRY RUN] Would restore: ${description}${NC}"
+        echo -e "${BLUE}  From: ${source}${NC}"
+        echo -e "${BLUE}  To: ${dest}${NC}"
+        return 0
+    fi
+    
+    echo -e "${GREEN}Restoring: ${description}${NC}"
+    mkdir -p "$(dirname "$dest")"
+    
+    # Backup existing file if it exists
+    if [[ -e "$dest" ]]; then
+        mv "$dest" "${dest}.backup-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+    fi
+    
+    cp -r "$source" "$dest" 2>/dev/null || {
+        echo -e "${RED}Error: Could not restore ${source}${NC}"
+        return 1
+    }
+    return 0
+}
+
+# Function to restore a config file
+restore_config() {
+    local filename="$1"
+    local description="${2:-$filename}"
+    restore_item "${BACKUP_DIR}/config/${filename}" "${HOME}/.config/${filename}" "$description"
+}
+
 load_categories() {
     local categories_file="${BACKUP_DIR}/metadata/categories.txt"
     if [[ ! -f "$categories_file" ]]; then
@@ -717,46 +772,6 @@ restore_by_category() {
     else
         echo -e "${GREEN}  ✓ Restored ${item_count} item(s)${NC}"
     fi
-}
-
-# Function to restore a file or directory
-restore_item() {
-    local source="$1"
-    local dest="$2"
-    local description="$3"
-    
-    if [[ ! -e "$source" ]]; then
-        echo -e "${YELLOW}Skipping (not in backup): ${description}${NC}"
-        return 1
-    fi
-    
-    if [[ "$DRY_RUN" == true ]]; then
-        echo -e "${BLUE}[DRY RUN] Would restore: ${description}${NC}"
-        echo -e "${BLUE}  From: ${source}${NC}"
-        echo -e "${BLUE}  To: ${dest}${NC}"
-        return 0
-    fi
-    
-    echo -e "${GREEN}Restoring: ${description}${NC}"
-    mkdir -p "$(dirname "$dest")"
-    
-    # Backup existing file if it exists
-    if [[ -e "$dest" ]]; then
-        mv "$dest" "${dest}.backup-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
-    fi
-    
-    cp -r "$source" "$dest" 2>/dev/null || {
-        echo -e "${RED}Error: Could not restore ${source}${NC}"
-        return 1
-    }
-    return 0
-}
-
-# Function to restore a config file
-restore_config() {
-    local filename="$1"
-    local description="${2:-$filename}"
-    restore_item "${BACKUP_DIR}/config/${filename}" "${HOME}/.config/${filename}" "$description"
 }
 
 # Read current theme settings from backup
@@ -1216,20 +1231,6 @@ if [[ "$SKIP_USER_RESOURCES" == false ]]; then
     fi
 fi
 
-# Reconfigure KWin to apply window decorations and settings
-reconfigure_kwin() {
-    if command -v qdbus >/dev/null 2>&1; then
-        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
-        qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || {
-            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
-        }
-    elif command -v qdbus-qt6 >/dev/null 2>&1; then
-        echo -e "${BLUE}Reconfiguring KWin to apply window decorations...${NC}"
-        qdbus-qt6 org.kde.KWin /KWin reconfigure 2>/dev/null || {
-            echo -e "${YELLOW}Note: KWin reconfiguration may require a logout/login for full effect${NC}"
-        }
-    fi
-}
 
 # Common completion message for both modes
 if [[ "$DRY_RUN" == false ]]; then
