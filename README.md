@@ -121,10 +121,14 @@ Version 1.2-beta introduces interactive restore mode, allowing you to selectivel
 ```
 
 **How it works:**
-1. The script displays all available categories with item counts
-2. You can select multiple categories (comma-separated numbers) or choose "Restore All"
-3. Selected categories are displayed for confirmation before restore
-4. Only the selected categories are restored
+1. **Stage 1 - Category Selection:** The script displays all available categories with item counts
+2. **Stage 2 - Restore Options:** After selecting categories, you'll be asked about:
+   - Skip display configuration (safe for different hardware)
+   - Re-download themes/icons from repositories (instead of restoring files)
+3. **Stage 3 - Restore:** Selected categories are restored
+4. **Stage 4 - Missing Applications:** After restore, the script detects and offers to install missing:
+   - Autostart applications (e.g., yakuake from Flatpak)
+   - Default applications (from mimeapps.list)
 
 **Available Categories:**
 - **Appearance** - Themes, colors, icons, fonts, wallpapers, window decorations
@@ -133,7 +137,7 @@ Version 1.2-beta introduces interactive restore mode, allowing you to selectivel
 - **Window Manager** - KWin settings, window rules, display configuration
 - **Desktop** - Panel layout, applets, workspace settings
 - **Notifications** - Notification settings
-- **Applications** - KDE application settings, autostart entries
+- **Applications** - KDE application settings, autostart entries, default applications (mimeapps.list)
 - **Services** - KDE services, activity manager, desktop portal
 - **Connectivity** - KDE Connect settings
 - **KDE6 Data** - KDE6 daemon data, KNewStuff registries
@@ -153,6 +157,12 @@ Version 1.2-beta introduces interactive restore mode, allowing you to selectivel
 #
 # Enter your choices: 1,2,4
 ```
+
+**Interactive Features:**
+- **Multi-stage prompts:** Category selection → Restore options → Missing app detection
+- **Smart app detection:** Automatically detects missing autostart and default applications
+- **Flatpak support:** Detects and offers to install Flatpak applications (e.g., yakuake)
+- **Installation prompts:** After restore, offers to install missing applications with appropriate package manager hints
 
 **Note:** Interactive mode requires a backup created with version 1.2-beta or later (includes `metadata/categories.txt`). Older backups will fall back to full restore.
 
@@ -336,9 +346,13 @@ Restores KDE Plasma 6 settings from a backup.
 
 **Options:**
 - `--interactive, -i` - Interactive TUI to selectively choose which categories to restore
+  - Includes multi-stage prompts for restore options and missing app detection
+  - Automatically detects and offers to install missing autostart/default applications
 - `--re-download-themes` - Re-download themes/icons from repositories instead of restoring files
+  - Can also be selected during interactive mode
 - `--skip-user-resources` - Only restore config files, skip themes/icons
 - `--skip-display-config` - Skip display configuration (safe for different hardware)
+  - Can also be selected during interactive mode
 - `--dry-run` - Show what would be restored without making changes
 - `--validate-only` - Validate backup without restoring
 
@@ -598,6 +612,7 @@ You're ready to use the backup for real restoration when needed!
 - KDE services (`kded6rc`, `kded5rc`)
 - KDE Connect settings
 - Autostart applications
+- Default applications for file types (`mimeapps.list`)
 - KDE application settings (Discover, Dolphin, Kate, etc.)
 
 **User Resources:**
@@ -676,12 +691,12 @@ To ensure complete restoration:
 
 2. **Verify System Compatibility:**
    - Same or compatible Plasma version
-   - Required applications installed
+   - Required applications installed (or use interactive restore to install missing apps)
    - Hardware compatibility (especially for display config)
 
 3. **Manual Steps After Restore:**
    - Reconfigure display if using different hardware
-   - Reinstall missing applications from autostart
+   - **Missing apps:** The restore script will prompt to install missing autostart and default applications
    - Verify network printers if applicable
    - Check system services if needed
 
@@ -738,6 +753,7 @@ To ensure complete restoration:
 | `kdedefaults/` | KDE default settings | System-wide default overrides (includes `ksplashrc`) |
 | `kde.org/` | KDE application settings | Settings for Discover, Dolphin, Kate, etc. |
 | `autostart/` | Autostart applications | `.desktop` files for applications that start with Plasma |
+| `mimeapps.list` | Default applications | Default applications for file types (MIME associations) |
 
 ### User Resources (`~/.local/share/`)
 
@@ -931,10 +947,28 @@ If validation reports errors:
 - Ensure you have read access to all backup files
 - Check that essential files exist in backup
 
-### Missing Applications in Autostart
+### Missing Applications in Autostart or Default Apps
 
-- Applications that don't exist on target system are simply ignored (harmless)
-- Install missing applications or remove autostart entries manually
+The restore script now automatically detects missing applications and offers to install them:
+
+**Autostart Applications:**
+- After restore, the script checks all autostart entries
+- Detects missing applications (including Flatpak apps like yakuake)
+- Prompts: "Would you like to install these missing autostart applications? (y/n)"
+- Attempts automatic installation for Flatpak apps
+- Provides installation hints for system packages
+
+**Default Applications:**
+- Checks `mimeapps.list` for default application associations
+- Detects missing default applications
+- Prompts: "Would you like to install these missing default applications? (y/n)"
+- Offers installation assistance
+
+**Manual Installation:**
+If automatic installation fails or you skip the prompts:
+- **Flatpak apps:** `flatpak search <app-name>` then `flatpak install <app-id>`
+- **System packages:** Use your package manager (apt, pacman, dnf, etc.)
+- Check the backup's `metadata/kde-packages.txt` for package names
 
 ---
 
@@ -1008,6 +1042,8 @@ backup-YYYYMMDD-HHMMSS/
     ├── categories.txt       # Categories metadata (v1.2-beta+, for interactive restore)
     └── manifest.txt         # Complete file list
 ```
+
+**Note:** The backup includes `mimeapps.list` for default application settings. The restore script automatically detects and offers to install missing autostart and default applications (including Flatpak apps like yakuake).
 
 ---
 
