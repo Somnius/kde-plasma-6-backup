@@ -28,6 +28,10 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 - [Quick Reference Commands](#quick-reference-commands)
 - [Troubleshooting](#troubleshooting)
 - [Manual Backup/Restore](#manual-backuprestore)
+- [Backup Structure](#backup-structure)
+- [Tips and Best Practices](#tips-and-best-practices)
+- [References](#references)
+- [License](#license)
 
 ---
 
