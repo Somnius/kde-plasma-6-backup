@@ -857,6 +857,142 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
             fi
         fi
     fi
+    
+    # Interactive restore completion - same as full restore
+    if [[ "$DRY_RUN" == false ]]; then
+        echo ""
+        echo -e "${GREEN}=== Restore completed! ===${NC}"
+        
+        # Reconfigure KWin if window manager settings were restored
+        if [[ -n "${SELECTED_CATEGORIES[window-manager]}" ]]; then
+            reconfigure_kwin
+        fi
+        
+        # Check for missing autostart applications
+        echo ""
+        echo -e "${BLUE}--- Checking for missing applications ---${NC}"
+        
+        local missing_autostart=$(detect_missing_autostart_apps)
+        if [[ -n "$missing_autostart" ]]; then
+            echo ""
+            echo -e "${YELLOW}Missing autostart applications detected:${NC}"
+            local autostart_count=0
+            declare -a autostart_apps
+            while IFS='|' read -r app_name desktop_file; do
+                echo -e "  ${YELLOW}•${NC} ${app_name}"
+                autostart_apps+=("$app_name|$desktop_file")
+                ((autostart_count++))
+            done <<< "$missing_autostart"
+            
+            if [[ "$DRY_RUN" == false ]]; then
+                echo ""
+                read -p "Would you like to install these missing autostart applications? (y/n): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    for app_entry in "${autostart_apps[@]}"; do
+                        IFS='|' read -r app_name desktop_file <<< "$app_entry"
+                        echo -e "${BLUE}Attempting to install: ${app_name}${NC}"
+                        
+                        # Check if it's a Flatpak app
+                        if [[ "$desktop_file" == *"flatpak"* ]] || [[ "$app_name" == "yakuake" ]] || flatpak list --app 2>/dev/null | grep -qi "$app_name"; then
+                            if command -v flatpak >/dev/null 2>&1; then
+                                # Try to find Flatpak app ID
+                                local flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
+                                if [[ -n "$flatpak_id" ]]; then
+                                    echo -e "${YELLOW}Installing Flatpak app: ${flatpak_id}${NC}"
+                                    flatpak install -y "$flatpak_id" 2>/dev/null || {
+                                        echo -e "${YELLOW}Could not auto-install ${app_name}. Please install manually.${NC}"
+                                        echo -e "${YELLOW}  Try: flatpak search ${app_name}${NC}"
+                                    }
+                                else
+                                    echo -e "${YELLOW}Could not find Flatpak app for ${app_name}. Please install manually.${NC}"
+                                    echo -e "${YELLOW}  Try: flatpak search ${app_name}${NC}"
+                                fi
+                            else
+                                echo -e "${YELLOW}Flatpak not available. Please install ${app_name} manually.${NC}"
+                            fi
+                        else
+                            # Try system package manager
+                            PKG_MGR=$(detect_package_manager)
+                            if [[ "$PKG_MGR" != "unknown" ]]; then
+                                INSTALL_CMD=$(get_install_command "$PKG_MGR")
+                                echo -e "${YELLOW}Attempting to install via ${PKG_MGR}: ${app_name}${NC}"
+                                # Note: Package name might differ, user may need to install manually
+                                echo -e "${YELLOW}  Please install ${app_name} manually using your package manager${NC}"
+                                echo -e "${YELLOW}  Example: ${INSTALL_CMD} ${app_name}${NC}"
+                            else
+                                echo -e "${YELLOW}Please install ${app_name} manually${NC}"
+                            fi
+                        fi
+                    done
+                fi
+            fi
+        fi
+        
+        # Check for missing default applications
+        local missing_defaults=$(detect_missing_default_apps)
+        if [[ -n "$missing_defaults" ]]; then
+            echo ""
+            echo -e "${YELLOW}Missing default applications detected:${NC}"
+            local defaults_count=0
+            declare -a default_apps
+            while IFS='|' read -r app_name app_desktop; do
+                echo -e "  ${YELLOW}•${NC} ${app_name}"
+                default_apps+=("$app_name|$app_desktop")
+                ((defaults_count++))
+            done <<< "$missing_defaults"
+            
+            if [[ "$DRY_RUN" == false ]]; then
+                echo ""
+                read -p "Would you like to install these missing default applications? (y/n): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    for app_entry in "${default_apps[@]}"; do
+                        IFS='|' read -r app_name app_desktop <<< "$app_entry"
+                        echo -e "${BLUE}Attempting to install: ${app_name}${NC}"
+                        
+                        # Check if it's a Flatpak app
+                        if [[ "$app_desktop" == *"flatpak"* ]] || flatpak list --app 2>/dev/null | grep -qi "$app_name"; then
+                            if command -v flatpak >/dev/null 2>&1; then
+                                local flatpak_id=$(flatpak search "$app_name" 2>/dev/null | grep -i "$app_name" | head -1 | awk '{print $1}')
+                                if [[ -n "$flatpak_id" ]]; then
+                                    echo -e "${YELLOW}Installing Flatpak app: ${flatpak_id}${NC}"
+                                    flatpak install -y "$flatpak_id" 2>/dev/null || {
+                                        echo -e "${YELLOW}Could not auto-install ${app_name}. Please install manually.${NC}"
+                                    }
+                                else
+                                    echo -e "${YELLOW}Could not find Flatpak app for ${app_name}. Please install manually.${NC}"
+                                fi
+                            else
+                                echo -e "${YELLOW}Flatpak not available. Please install ${app_name} manually.${NC}"
+                            fi
+                        else
+                            # Try system package manager
+                            PKG_MGR=$(detect_package_manager)
+                            if [[ "$PKG_MGR" != "unknown" ]]; then
+                                INSTALL_CMD=$(get_install_command "$PKG_MGR")
+                                echo -e "${YELLOW}Please install ${app_name} manually using your package manager${NC}"
+                                echo -e "${YELLOW}  Example: ${INSTALL_CMD} ${app_name}${NC}"
+                            else
+                                echo -e "${YELLOW}Please install ${app_name} manually${NC}"
+                            fi
+                        fi
+                    done
+                fi
+            fi
+        fi
+        
+        if [[ -z "$missing_autostart" ]] && [[ -z "$missing_defaults" ]]; then
+            echo -e "${GREEN}✓ All applications are available${NC}"
+        fi
+        
+        echo ""
+        echo -e "${YELLOW}You may need to:${NC}"
+        echo -e "${YELLOW}  1. Log out and log back in for some settings to take effect (recommended)${NC}"
+        echo -e "${YELLOW}  2. Restart Plasma: killall plasmashell && kstart plasmashell${NC}"
+        echo -e "${YELLOW}  3. Or simply reboot your system${NC}"
+        echo ""
+    fi
 else
     # Full restore (original behavior)
     echo ""
