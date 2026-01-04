@@ -754,25 +754,25 @@ fi
 
 # Handle interactive/selective restore
 if [[ "$INTERACTIVE" == true ]]; then
-    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    categories_file="${BACKUP_DIR}/metadata/categories.txt"
     if [[ ! -f "$categories_file" ]]; then
         echo -e "${YELLOW}Warning: Categories metadata not found. Using full restore.${NC}"
         INTERACTIVE=false
     else
         # Get unique categories
-        local unique_categories=($(grep -v '^#' "$categories_file" | cut -d'|' -f1 | sort -u))
+        unique_categories=($(grep -v '^#' "$categories_file" | cut -d'|' -f1 | sort -u))
         
         echo ""
         echo -e "${BLUE}=== Interactive Restore Selection ===${NC}"
         echo -e "${BLUE}Select which categories to restore:${NC}"
         echo ""
         
-        local index=1
+        index=1
         declare -A category_map
         
         for category in "${unique_categories[@]}"; do
-            local count=$(grep -v '^#' "$categories_file" | grep "^${category}|" | wc -l)
-            local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+            count=$(grep -v '^#' "$categories_file" | grep "^${category}|" | wc -l)
+            display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
             echo -e "${GREEN}[${index}]${NC} ${display_name} (${count} items)"
             category_map[$index]="$category"
             ((index++))
@@ -791,7 +791,7 @@ if [[ "$INTERACTIVE" == true ]]; then
         
         # Parse choices
         IFS=',' read -ra choice_array <<< "$choices"
-        local restore_all=false
+        restore_all=false
         
         for choice in "${choice_array[@]}"; do
             choice=$(echo "$choice" | xargs)
@@ -813,7 +813,7 @@ if [[ "$INTERACTIVE" == true ]]; then
         echo ""
         echo -e "${BLUE}Selected categories:${NC}"
         for category in "${!SELECTED_CATEGORIES[@]}"; do
-            local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+            display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
             echo -e "  ${GREEN}✓${NC} ${display_name}"
         done
         echo ""
@@ -856,31 +856,31 @@ if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
     echo -e "${BLUE}=== Starting Selective Restore ===${NC}"
     echo -e "${BLUE}Will restore ${#SELECTED_CATEGORIES[@]} category/categories${NC}"
     
-    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    categories_file="${BACKUP_DIR}/metadata/categories.txt"
     for category in "${!SELECTED_CATEGORIES[@]}"; do
-        local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+        display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
         echo ""
         echo -e "${BLUE}--- Restoring ${display_name} Category ---${NC}"
         
-        local item_count=0
+        item_count=0
         while IFS='|' read -r cat file_path description || [[ -n "$cat" ]]; do
             [[ "$cat" =~ ^#.*$ ]] && continue
             [[ -z "$cat" ]] && continue
             [[ "$cat" != "$category" ]] && continue
             
-            local source="${BACKUP_DIR}/${file_path}"
-            local dest=""
+            source="${BACKUP_DIR}/${file_path}"
+            dest=""
             
             if [[ "$file_path" == config/* ]]; then
                 if [[ "$file_path" == config/*/* ]]; then
-                    local rel_path="${file_path#config/}"
+                    rel_path="${file_path#config/}"
                     dest="${HOME}/.config/${rel_path}"
                 else
-                    local filename=$(basename "$file_path")
+                    filename=$(basename "$file_path")
                     dest="${HOME}/.config/${filename}"
                 fi
             elif [[ "$file_path" == local-share/* ]]; then
-                local rel_path="${file_path#local-share/}"
+                rel_path="${file_path#local-share/}"
                 dest="${HOME}/.local/share/${rel_path}"
             fi
             
