@@ -1388,7 +1388,7 @@ if [[ "$DRY_RUN" == false ]]; then
     fi
     
     # Check for missing default applications
-    missing_defaults=$(detect_missing_default_apps)
+    missing_defaults=$(detect_missing_default_apps 2>/dev/null || echo "")
     if [[ -n "$missing_defaults" ]]; then
         echo ""
         echo -e "${YELLOW}Missing default applications detected:${NC}"
