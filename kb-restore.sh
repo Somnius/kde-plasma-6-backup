@@ -555,29 +555,8 @@ restore_config() {
     restore_item "${BACKUP_DIR}/config/${filename}" "${HOME}/.config/${filename}" "$description"
 }
 
-load_categories() {
-    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
-    if [[ ! -f "$categories_file" ]]; then
-        echo -e "${YELLOW}Warning: Categories metadata not found. Using full restore.${NC}"
-        return 1
-    fi
-    
-    while IFS='|' read -r category file_path description; do
-        # Skip comments and empty lines
-        [[ "$category" =~ ^#.*$ ]] && continue
-        [[ -z "$category" ]] && continue
-        
-        # Check if file exists in backup
-        if [[ -e "${BACKUP_DIR}/${file_path}" ]] || [[ -d "${BACKUP_DIR}/${file_path}" ]]; then
-            CATEGORY_FILES["${category}|${file_path}"]="$description"
-        fi
-    done < "$categories_file"
-    
-    return 0
-}
-
-# Interactive TUI for category selection
-show_interactive_menu() {
+# Interactive TUI for category selection (kept for reference, not used in new implementation)
+show_interactive_menu_old() {
     local categories_file="${BACKUP_DIR}/metadata/categories.txt"
     if [[ ! -f "$categories_file" ]]; then
         echo -e "${RED}Error: Categories metadata not found in backup${NC}"
@@ -694,8 +673,8 @@ show_interactive_menu() {
     return 0
 }
 
-# Restore items by category
-restore_by_category() {
+# Restore items by category (kept for reference, not used in new implementation)
+restore_by_category_old() {
     local category="$1"
     local categories_file="${BACKUP_DIR}/metadata/categories.txt"
     
@@ -775,12 +754,88 @@ fi
 
 # Handle interactive/selective restore
 if [[ "$INTERACTIVE" == true ]]; then
-    if ! load_categories; then
-        echo -e "${YELLOW}Falling back to full restore...${NC}"
+    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
+    if [[ ! -f "$categories_file" ]]; then
+        echo -e "${YELLOW}Warning: Categories metadata not found. Using full restore.${NC}"
         INTERACTIVE=false
     else
-        if ! show_interactive_menu; then
-            exit 1
+        # Get unique categories
+        local unique_categories=($(grep -v '^#' "$categories_file" | cut -d'|' -f1 | sort -u))
+        
+        echo ""
+        echo -e "${BLUE}=== Interactive Restore Selection ===${NC}"
+        echo -e "${BLUE}Select which categories to restore:${NC}"
+        echo ""
+        
+        local index=1
+        declare -A category_map
+        
+        for category in "${unique_categories[@]}"; do
+            local count=$(grep -v '^#' "$categories_file" | grep "^${category}|" | wc -l)
+            local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+            echo -e "${GREEN}[${index}]${NC} ${display_name} (${count} items)"
+            category_map[$index]="$category"
+            ((index++))
+        done
+        
+        echo -e "${GREEN}[${index}]${NC} Restore All Categories"
+        echo -e "${GREEN}[0]${NC} Cancel"
+        echo ""
+        
+        read -p "Enter your choices (comma-separated, e.g., 1,3,5 or ${index} for all): " choices
+        
+        if [[ "$choices" == "0" ]]; then
+            echo "Restore cancelled."
+            exit 0
+        fi
+        
+        # Parse choices
+        IFS=',' read -ra choice_array <<< "$choices"
+        local restore_all=false
+        
+        for choice in "${choice_array[@]}"; do
+            choice=$(echo "$choice" | xargs)
+            if [[ "$choice" == "all" ]] || [[ "$choice" == "All" ]] || [[ "$choice" == "ALL" ]] || [[ "$choice" == "$index" ]]; then
+                restore_all=true
+                break
+            fi
+            if [[ "$choice" =~ ^[0-9]+$ ]] && [[ -n "${category_map[$choice]:-}" ]]; then
+                SELECTED_CATEGORIES["${category_map[$choice]}"]=1
+            fi
+        done
+        
+        if [[ "$restore_all" == true ]]; then
+            for category in "${unique_categories[@]}"; do
+                SELECTED_CATEGORIES["$category"]=1
+            done
+        fi
+        
+        echo ""
+        echo -e "${BLUE}Selected categories:${NC}"
+        for category in "${!SELECTED_CATEGORIES[@]}"; do
+            local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+            echo -e "  ${GREEN}✓${NC} ${display_name}"
+        done
+        echo ""
+        
+        # Restore options
+        if [[ -f "${BACKUP_DIR}/config/kwinoutputconfig.json" ]]; then
+            read -p "Skip display configuration? (y/n): " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && SKIP_DISPLAY_CONFIG=true
+        fi
+        
+        if [[ "$SKIP_USER_RESOURCES" == false ]] && [[ -n "${SELECTED_CATEGORIES[appearance]}" ]]; then
+            read -p "Re-download themes from repositories? (y/n): " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && RE_DOWNLOAD=true
+        fi
+        
+        read -p "Continue with restore? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Restore cancelled."
+            exit 0
         fi
     fi
 fi
@@ -796,16 +851,58 @@ fi
 
 # Perform restore based on mode
 if [[ "$INTERACTIVE" == true ]] && [[ ${#SELECTED_CATEGORIES[@]} -gt 0 ]]; then
-    # Selective restore by category
+    # Selective restore by category - INLINE CODE, NO FUNCTION CALLS
     echo ""
     echo -e "${BLUE}=== Starting Selective Restore ===${NC}"
     echo -e "${BLUE}Will restore ${#SELECTED_CATEGORIES[@]} category/categories${NC}"
     
+    local categories_file="${BACKUP_DIR}/metadata/categories.txt"
     for category in "${!SELECTED_CATEGORIES[@]}"; do
-        # Use || true to prevent set -e from exiting on restore_by_category failure
-        if ! restore_by_category "$category" || true; then
-            echo -e "${YELLOW}Warning: Issues encountered while restoring category: ${category}${NC}"
-            # Continue with next category instead of exiting
+        local display_name=$(echo "$category" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+        echo ""
+        echo -e "${BLUE}--- Restoring ${display_name} Category ---${NC}"
+        
+        local item_count=0
+        while IFS='|' read -r cat file_path description || [[ -n "$cat" ]]; do
+            [[ "$cat" =~ ^#.*$ ]] && continue
+            [[ -z "$cat" ]] && continue
+            [[ "$cat" != "$category" ]] && continue
+            
+            local source="${BACKUP_DIR}/${file_path}"
+            local dest=""
+            
+            if [[ "$file_path" == config/* ]]; then
+                if [[ "$file_path" == config/*/* ]]; then
+                    local rel_path="${file_path#config/}"
+                    dest="${HOME}/.config/${rel_path}"
+                else
+                    local filename=$(basename "$file_path")
+                    dest="${HOME}/.config/${filename}"
+                fi
+            elif [[ "$file_path" == local-share/* ]]; then
+                local rel_path="${file_path#local-share/}"
+                dest="${HOME}/.local/share/${rel_path}"
+            fi
+            
+            if [[ -n "$dest" ]] && [[ -e "$source" ]]; then
+                echo -e "${GREEN}  → ${description}${NC}"
+                if [[ "$DRY_RUN" == true ]]; then
+                    echo -e "${BLUE}[DRY RUN] Would restore: ${description}${NC}"
+                    ((item_count++))
+                else
+                    if restore_item "$source" "$dest" "$description" 2>/dev/null || true; then
+                        ((item_count++))
+                    else
+                        echo -e "${YELLOW}  Warning: Failed to restore ${description}${NC}"
+                    fi
+                fi
+            fi
+        done < "$categories_file" || true
+        
+        if [[ $item_count -eq 0 ]]; then
+            echo -e "${YELLOW}  No items found in backup for this category${NC}"
+        else
+            echo -e "${GREEN}  ✓ Restored ${item_count} item(s)${NC}"
         fi
     done
     
