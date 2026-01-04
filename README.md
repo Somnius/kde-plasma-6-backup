@@ -35,7 +35,7 @@ The individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kd
 
 ---
 
-## Quick Start
+## Quick Start <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### Create a Backup
 
@@ -62,13 +62,16 @@ Checks backup integrity and compatibility before restoring.
 
 # Then restore (with safety options for different hardware)
 ./kde-plasma-6 restore backup-20250104-120000 --skip-display-config
+
+# Or restore with themes re-downloaded from repositories
+./kde-plasma-6 restore backup-20250104-120000 --re-download-themes
 ```
 
 **Note:** The `kde-plasma-6` wrapper script is the recommended interface. Individual scripts (`kde-plasma-6-backup.sh`, `kde-plasma-6-restore.sh`, `kde-plasma-6-validate.sh`) are internal implementation details and should be accessed through the wrapper.
 
 ---
 
-## Safety and Precautions
+## Safety and Precautions <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### ⚠️ Is It Safe to Restore on Another System?
 
@@ -153,7 +156,7 @@ Checks backup integrity and compatibility before restoring.
 
 ---
 
-## Scripts Documentation
+## Scripts Documentation <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 ### `kde-plasma-6` (Main Wrapper - **Use This**)
 
@@ -175,8 +178,11 @@ The main entry point for all backup/restore operations. This wrapper delegates t
 # Validate backup
 ./kde-plasma-6 validate backup-20250104-120000
 
-# Restore backup
+# Restore backup (with safety options)
 ./kde-plasma-6 restore backup-20250104-120000 --skip-display-config
+
+# Restore with re-downloading themes from repositories
+./kde-plasma-6 restore backup-20250104-120000 --re-download-themes
 
 # Get help
 ./kde-plasma-6 help
@@ -279,7 +285,7 @@ Validates backup integrity and compatibility.
 
 ---
 
-## Testing Guide
+## Testing Guide <span style="float:right; font-size:0.7em;">[↑ Back to TOC](#table-of-contents)</span>
 
 Step-by-step guide to test the backup and restore scripts on your current system.
 
@@ -689,8 +695,11 @@ cd ~/scripts/kde-plasma-6_backup
 # Validate backup
 ./kde-plasma-6 validate backup-YYYYMMDD-HHMMSS
 
-# Restore backup
+# Restore backup (skip display config for different hardware)
 ./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --skip-display-config
+
+# Restore with themes re-downloaded from repositories
+./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --re-download-themes
 
 # Dry-run (preview)
 ./kde-plasma-6 restore backup-YYYYMMDD-HHMMSS --dry-run
